@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚗 MassRMV Appointment Monitor - TESTED & WORKING!
 
 ## ✅ System Status: OPERATIONAL
@@ -155,3 +156,6 @@ The MassRMV appointment monitoring system has been successfully built and tested
 - ✅ **Architecture**: Production-ready structure
 
 **The system is ready for further development and production deployment!** 🚀
+=======
+Read Me File
+>>>>>>> da146749f10db9b36a4c25e058509e4f4d1fa6f0

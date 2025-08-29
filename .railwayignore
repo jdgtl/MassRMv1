@@ -1,0 +1,10 @@
+logs/
+*.log
+.DS_Store
+README.md
+*.test.js
+test-*.js
+debug-*.js
+demo.sh
+instructions/
+landing-pages/

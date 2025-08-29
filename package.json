@@ -1,0 +1,44 @@
+{
+  "name": "rmv-monitor",
+  "version": "1.0.0",
+  "description": "RMV Appointment Monitoring Service",
+  "main": "rmv-monitor-service.js",
+  "scripts": {
+    "start": "node rmv-monitor-service.js",
+    "dev": "nodemon rmv-monitor-service.js",
+    "test": "jest",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop rmv-monitor",
+    "pm2:restart": "pm2 restart rmv-monitor",
+    "pm2:logs": "pm2 logs rmv-monitor"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "pako": "^2.1.0",
+    "puppeteer": "^21.0.0",
+    "twilio": "^4.19.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "keywords": [
+    "rmv",
+    "appointments",
+    "massachusetts",
+    "scraping",
+    "automation"
+  ],
+  "author": "Jonathan",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0 <23.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,4 @@
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T04:08:56.995Z"}
+{"level":"error","message":"Failed to start server: socket hang up","timestamp":"2025-08-29T04:08:59.847Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T21:41:44.245Z"}
+{"level":"error","message":"Failed to start server: socket hang up","timestamp":"2025-08-29T21:41:45.269Z"}

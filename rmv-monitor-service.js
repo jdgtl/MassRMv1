@@ -148,7 +148,15 @@ class RMVScraper {
     async initialize() {
         this.browser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ]
         });
     }
 
@@ -555,6 +563,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use(express.static(__dirname)); // Serve files from root directory
+
+// Serve the main interface
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index-improved.html'));
+});
 
 const service = new RMVMonitorService();
 const db = new Database(config.dbPath);

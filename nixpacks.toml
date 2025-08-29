@@ -1,0 +1,11 @@
+[phases.build]
+cmds = ["npm ci"]
+
+[phases.install]
+aptPkgs = [
+    "chromium",
+    "chromium-sandbox"
+]
+
+[start]
+cmd = "npm start"

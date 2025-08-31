@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Quick Railway deployment fix for timeouts
 

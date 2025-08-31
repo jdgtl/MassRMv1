@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 echo "🚀 RMV Monitor - Optimized Railway Deployment"
 echo "============================================="
@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Check if we're in the right directory
-if [ ! -f "package.json" ]; then
+if [[ ! -f "package.json" ]]; then
     echo -e "${RED}❌ Error: Please run this script from the appv1 directory${NC}"
     exit 1
 fi
@@ -19,7 +19,7 @@ fi
 echo -e "${BLUE}📋 Pre-deployment optimizations...${NC}"
 
 # Clean node_modules to avoid conflicts
-if [ -d "node_modules" ]; then
+if [[ -d "node_modules" ]]; then
     echo "🧹 Cleaning node_modules..."
     rm -rf node_modules
 fi
@@ -32,7 +32,7 @@ echo ""
 echo -e "${BLUE}🔐 Step 1: Railway login${NC}"
 railway login
 
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
     echo -e "${RED}❌ Login failed. Please try again.${NC}"
     exit 1
 fi
@@ -41,7 +41,7 @@ echo ""
 echo -e "${BLUE}🏗️ Step 2: Initialize or link Railway project${NC}"
 
 # Check if already linked
-if [ -f ".railway/project.json" ]; then
+if [[ -f ".railway/project.json" ]]; then
     echo "📂 Railway project already linked"
 else
     echo "🔗 Linking to Railway project..."
@@ -68,8 +68,8 @@ echo "   railway variables set TWILIO_AUTH_TOKEN=your-token"
 echo "   railway variables set TWILIO_FROM_NUMBER=+1234567890"
 echo ""
 
-read -p "Have you set EMAIL_USER and EMAIL_PASS? (y/N): " -n 1 -r
-echo
+echo "Have you set EMAIL_USER and EMAIL_PASS? (y/N): "
+read -r REPLY
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}⏸️ Please set your email credentials first, then run this script again.${NC}"
     echo ""
@@ -86,14 +86,14 @@ echo -e "${BLUE}🚀 Step 4: Deploy with optimized settings${NC}"
 echo "Deploying to Railway..."
 railway up --verbose
 
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
     echo ""
     echo -e "${GREEN}✅ Deployment successful!${NC}"
     echo ""
     
     # Get the URL
     URL=$(railway status --json | grep -o '"url":"[^"]*' | sed 's/"url":"//')
-    if [ ! -z "$URL" ]; then
+    if [[ ! -z "$URL" ]]; then
         echo -e "${GREEN}🌐 Your app is live at: $URL${NC}"
     fi
     

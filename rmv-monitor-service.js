@@ -979,15 +979,170 @@ document.head.insertAdjacentHTML('beforeend', autoFillStyles);
 <\/script>
 `;
 
+// Active monitoring sessions storage
+let activeMonitoringSessions = new Map();
+
+// Start/Stop monitoring endpoints
+app.post('/api/start-monitoring', async (req, res) => {
+    try {
+        const { rmvUrl, selectedCenters, preferences, personalData } = req.body;
+        
+        if (!rmvUrl || !selectedCenters || selectedCenters.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'RMV URL and selected centers are required'
+            });
+        }
+
+        // Generate session ID
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store monitoring session
+        activeMonitoringSessions.set(sessionId, {
+            rmvUrl,
+            selectedCenters,
+            preferences: preferences || {},
+            personalData: personalData || {},
+            startedAt: new Date().toISOString(),
+            lastChecked: null,
+            appointmentsFound: []
+        });
+
+        logger.info(`🟢 Started monitoring session ${sessionId} for ${selectedCenters.length} locations`);
+        
+        res.json({
+            success: true,
+            sessionId,
+            message: 'Monitoring started successfully',
+            locationsCount: selectedCenters.length
+        });
+
+    } catch (error) {
+        logger.error('Error starting monitoring:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+app.post('/api/stop-monitoring', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        
+        if (sessionId && activeMonitoringSessions.has(sessionId)) {
+            activeMonitoringSessions.delete(sessionId);
+            logger.info(`🔴 Stopped monitoring session ${sessionId}`);
+            
+            res.json({
+                success: true,
+                message: 'Monitoring stopped successfully'
+            });
+        } else {
+            // Stop all sessions if no specific sessionId
+            const count = activeMonitoringSessions.size;
+            activeMonitoringSessions.clear();
+            logger.info(`🔴 Stopped all ${count} monitoring sessions`);
+            
+            res.json({
+                success: true,
+                message: `Stopped ${count} monitoring sessions`
+            });
+        }
+
+    } catch (error) {
+        logger.error('Error stopping monitoring:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get monitoring status
+app.get('/api/monitoring-status', (req, res) => {
+    const sessions = Array.from(activeMonitoringSessions.entries()).map(([sessionId, session]) => ({
+        sessionId,
+        locationsCount: session.selectedCenters.length,
+        startedAt: session.startedAt,
+        lastChecked: session.lastChecked,
+        appointmentsFound: session.appointmentsFound.length
+    }));
+
+    res.json({
+        success: true,
+        activeSessions: sessions.length,
+        sessions: sessions,
+        totalLocations: sessions.reduce((sum, s) => sum + s.locationsCount, 0)
+    });
+});
+
+// Main monitoring loop
+async function runMonitoringCycle() {
+    if (activeMonitoringSessions.size === 0) {
+        logger.info(`Checking for ${activeMonitoringSessions.size} active users`);
+        return;
+    }
+
+    logger.info(`🔍 Checking appointments for ${activeMonitoringSessions.size} active sessions...`);
+
+    for (const [sessionId, session] of activeMonitoringSessions) {
+        try {
+            logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
+            
+            // Use the existing checkRMVUrl method
+            const results = await service.scraper.checkRMVUrl(session.rmvUrl, {
+                locations: session.selectedCenters,
+                ...session.preferences
+            });
+            
+            if (results.success && results.totalAppointments > 0) {
+                logger.info(`✅ Found ${results.totalAppointments} appointments for session ${sessionId}`);
+                
+                // Store results in session
+                session.appointmentsFound = results.appointments;
+                session.lastChecked = new Date().toISOString();
+                
+                // Here you could trigger notifications
+                // await sendNotifications(session, results);
+            } else {
+                logger.info(`📅 No appointments found for session ${sessionId}`);
+                session.lastChecked = new Date().toISOString();
+            }
+
+        } catch (error) {
+            logger.error(`❌ Error processing session ${sessionId}:`, error.message);
+            session.lastChecked = new Date().toISOString();
+        }
+    }
+}
+
+// Start monitoring cycle
+function startMonitoringCycle() {
+    // Run immediately
+    runMonitoringCycle();
+    
+    // Then run every 5 minutes
+    setInterval(() => {
+        logger.info('Starting appointment check cycle...');
+        runMonitoringCycle();
+    }, config.checkInterval * 60 * 1000);
+}
+
 // Start the server
 async function startServer() {
     try {
+        // Initialize browser for scraping
+        await service.scraper.initialize();
+        
         app.listen(config.port, () => {
-            logger.info(`✅ RMV Monitor Service running on http://localhost:${config.port}`);
-            logger.info(`✅ User data extraction enabled`);
-            logger.info(`✅ Service will expire on ${config.expireDate.toLocaleDateString()}`);
-            logger.info(`📱 Open http://localhost:${config.port} in your browser`);
-            logger.info(`🔍 Health check: http://localhost:${config.port}/health`);
+            logger.info('Starting RMV Monitor Service...');
+            logger.info(`RMV Monitor Service started successfully`);
+            logger.info(`API Server running on port ${config.port}`);
+            logger.info(`Service will expire on ${config.expireDate.toLocaleDateString()}`);
+            
+            // Start monitoring cycle
+            startMonitoringCycle();
         });
     } catch (error) {
         logger.error('Failed to start server:', error);

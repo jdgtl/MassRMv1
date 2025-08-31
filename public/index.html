@@ -1735,11 +1735,15 @@
             return true;
         }
 
-        // Start monitoring
+        // Global session ID for tracking monitoring session
+        let currentMonitoringSessionId = null;
+        let resultsPollingInterval = null;
+
+        // Start monitoring with backend session
         async function startMonitoring() {
             if (!validateForm()) return;
 
-            // Update UI
+            // Update UI immediately
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
             const monitorStatus = document.getElementById('monitorStatus');
@@ -1758,23 +1762,70 @@
             const startTime = sliderValueToTime(document.getElementById('startTimeSlider').value);
             const endTime = sliderValueToTime(document.getElementById('endTimeSlider').value);
 
-            addLog('Monitoring started successfully', 'success');
-            addLog(`Monitoring ${selectedCenters.size} service centers`, 'info');
-            addLog(`Preferred time window: ${startTime} - ${endTime}`, 'info');
+            try {
+                // Register monitoring session with backend
+                const response = await fetch('/api/start-monitoring', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        rmvUrl: document.getElementById('rmvUrl').value,
+                        selectedCenters: Array.from(selectedCenters),
+                        preferences: {
+                            startTime: startTime,
+                            endTime: endTime,
+                            startDate: document.getElementById('startDate').value,
+                            endDate: document.getElementById('endDate').value,
+                            locations: Array.from(selectedCenters)
+                        },
+                        personalData: extractedPersonalData || {}
+                    })
+                });
 
-            // Show appointments section
-            document.getElementById('appointmentsSection').style.display = 'block';
-            
-            // Start the monitoring loop
-            checkAppointments(); // Initial check
-            monitoringInterval = setInterval(checkAppointments, getCheckInterval());
-            
-            // Start countdown timer
-            startCountdownTimer();
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentMonitoringSessionId = result.sessionId;
+                    
+                    addLog('Monitoring started successfully', 'success');
+                    addLog(`Session ID: ${result.sessionId}`, 'info');
+                    addLog(`Backend monitoring ${result.locationsCount} service centers`, 'info');
+                    addLog(`Preferred time window: ${startTime} - ${endTime}`, 'info');
+                    addLog('Backend will check every 5 minutes automatically', 'info');
+
+                    // Show appointments section
+                    document.getElementById('appointmentsSection').style.display = 'block';
+                    
+                    // Start polling for results from backend every 30 seconds
+                    startResultsPolling();
+                    
+                } else {
+                    throw new Error(result.error || 'Failed to start monitoring');
+                }
+
+            } catch (error) {
+                addLog(`Failed to start monitoring: ${error.message}`, 'error');
+                
+                // Reset UI on error
+                if (startBtn) startBtn.style.display = 'inline-block';
+                if (stopBtn) stopBtn.style.display = 'none';
+                if (monitorStatus) {
+                    monitorStatus.textContent = 'INACTIVE';
+                    monitorStatus.className = 'status-badge status-inactive';
+                }
+            }
         }
 
-        // Stop monitoring
-        function stopMonitoring() {
+        // Stop monitoring with backend session
+        async function stopMonitoring() {
+            // Stop polling for results
+            if (resultsPollingInterval) {
+                clearInterval(resultsPollingInterval);
+                resultsPollingInterval = null;
+            }
+
+            // Clear old intervals (if any)
             if (monitoringInterval) {
                 clearInterval(monitoringInterval);
                 monitoringInterval = null;
@@ -1783,6 +1834,34 @@
             if (countdownInterval) {
                 clearInterval(countdownInterval);
                 countdownInterval = null;
+            }
+
+            // Stop backend monitoring session
+            if (currentMonitoringSessionId) {
+                try {
+                    const response = await fetch('/api/stop-monitoring', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sessionId: currentMonitoringSessionId
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        addLog('Monitoring stopped successfully', 'info');
+                        addLog(`Backend session ${currentMonitoringSessionId} terminated`, 'info');
+                    } else {
+                        addLog(`Warning: ${result.message}`, 'warn');
+                    }
+                } catch (error) {
+                    addLog(`Error stopping monitoring: ${error.message}`, 'error');
+                }
+                
+                currentMonitoringSessionId = null;
             }
 
             // Update UI
@@ -1800,8 +1879,38 @@
             // Show appointments inactive state
             document.getElementById('appointmentsLoading').style.display = 'none';
             document.getElementById('appointmentsInactive').style.display = 'block';
+        }
 
-            addLog('Monitoring stopped', 'info');
+        // Poll backend for monitoring results
+        function startResultsPolling() {
+            // Check for results every 30 seconds
+            resultsPollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/monitoring-status');
+                    const status = await response.json();
+                    
+                    if (status.success && status.sessions.length > 0) {
+                        const mySession = status.sessions.find(s => s.sessionId === currentMonitoringSessionId);
+                        
+                        if (mySession && mySession.appointmentsFound > 0) {
+                            addLog(`Backend found ${mySession.appointmentsFound} appointments!`, 'success');
+                            
+                            // You could fetch detailed appointment data here
+                            // For now, just update stats
+                            stats.available += mySession.appointmentsFound;
+                            updateStats();
+                        }
+                        
+                        // Update last checked time
+                        if (mySession && mySession.lastChecked) {
+                            const lastChecked = new Date(mySession.lastChecked);
+                            addLog(`Last checked: ${lastChecked.toLocaleTimeString()}`, 'info');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling monitoring status:', error);
+                }
+            }, 30000); // 30 seconds
         }
 
         // Get check interval based on current time

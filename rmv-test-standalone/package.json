@@ -1,0 +1,15 @@
+{
+  "name": "rmv-extractor-test",
+  "version": "1.0.0",
+  "description": "RMV Personal Data Extractor Test Interface",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "puppeteer": "^21.0.0",
+    "winston": "^3.8.0"
+  }
+}

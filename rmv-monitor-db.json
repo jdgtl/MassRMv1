@@ -1,0 +1,284 @@
+{
+  "users": [
+    {
+      "name": "Test User",
+      "email": "test@example.com",
+      "phone": "555-0123",
+      "centers": [
+        "Boston",
+        "Cambridge"
+      ],
+      "times": [
+        "morning",
+        "afternoon"
+      ],
+      "id": "1756509871266",
+      "createdAt": "2025-08-29T23:24:31.266Z"
+    },
+    {
+      "name": "Test User with URL",
+      "email": "test-url@example.com",
+      "phone": "555-0123",
+      "url": "https://rmvmassdotappt.cxmflow.com/Appointment/Index/2c052fc7-571f-4b76-9790-7e91f103c408?AccessToken=f7fb561d-7dc4-411b-b082-f29b705d26c5",
+      "times": [
+        "morning",
+        "afternoon"
+      ],
+      "id": "1756510083169",
+      "createdAt": "2025-08-29T23:28:03.169Z"
+    }
+  ],
+  "appointments": [],
+  "logs": [
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:19:25.744Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:20:08.439Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:20:49.883Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:22:30.223Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:26:32.128Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:28:24.261Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:32:18.102Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:37:18.121Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:38:29.569Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:43:29.586Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:46:00.985Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:51:00.998Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-29T23:56:01.011Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:01:00.966Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:06:00.978Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:11:00.985Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:16:00.996Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:21:01.005Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:26:01.038Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:31:01.049Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:36:01.062Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:41:01.070Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:46:01.084Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:51:01.095Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T00:56:01.107Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:01:01.118Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:06:01.129Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:11:01.139Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:16:01.150Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:21:01.056Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:26:01.057Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:31:01.056Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:36:01.057Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:41:01.061Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:46:01.064Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:51:01.130Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T01:56:01.136Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:01:01.143Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:06:01.150Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:11:01.155Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:16:01.161Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:21:01.166Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T02:26:01.172Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T06:37:46.181Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T06:42:46.188Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T07:00:01.262Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T07:05:01.266Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T07:10:01.271Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T07:15:01.276Z"
+    },
+    {
+      "type": "check_complete",
+      "usersChecked": 0,
+      "timestamp": "2025-08-30T07:20:01.257Z"
+    }
+  ]
+}

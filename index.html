@@ -668,60 +668,61 @@
             }
         }
 
-        // Check appointments (mock implementation)
+        // Check appointments via API
         async function checkAppointments() {
             stats.checks++;
             updateStats();
 
-            addLog(`Checking appointments for ${selectedCenters.size} centers...`, 'info');
+            const rmvUrl = document.getElementById('rmvUrl').value;
+            const selectedCentersArray = Array.from(selectedCenters);
+            
+            addLog(`Checking appointments for ${selectedCentersArray.length} centers via API...`, 'info');
 
-            // This would be replaced with actual API calls
-            // For demonstration, we'll simulate finding appointments
-            const mockCheckResults = await simulateAppointmentCheck();
+            try {
+                const response = await fetch('/api/scrape-rmv-appointments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        rmvUrl: rmvUrl,
+                        selectedCenters: selectedCentersArray,
+                        preferences: {
+                            startDate: document.getElementById('startDate').value,
+                            endDate: document.getElementById('endDate').value,
+                            startTime: sliderValueToTime(document.getElementById('startTimeSlider').value),
+                            endTime: sliderValueToTime(document.getElementById('endTimeSlider').value)
+                        }
+                    })
+                });
 
-            if (mockCheckResults.found) {
-                stats.available += mockCheckResults.appointments.length;
-                updateStats();
-
-                addLog(`Found ${mockCheckResults.appointments.length} available appointments!`, 'success');
-
-                // Send notifications
-                await sendNotifications(mockCheckResults.appointments);
-
-                // Auto-book if enabled
-                if (document.getElementById('autoBook').checked && mockCheckResults.appointments.length > 0) {
-                    await autoBookAppointment(mockCheckResults.appointments[0]);
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
                 }
-            } else {
-                addLog('No matching appointments found', 'info');
+
+                const result = await response.json();
+
+                if (result.success && result.found && result.appointments.length > 0) {
+                    stats.available += result.appointments.length;
+                    updateStats();
+
+                    addLog(`Found ${result.appointments.length} available appointments!`, 'success');
+
+                    // Send notifications
+                    await sendNotifications(result.appointments);
+
+                    // Auto-book if enabled
+                    if (document.getElementById('autoBook').checked) {
+                        await autoBookAppointment(result.appointments[0]);
+                    }
+                } else {
+                    addLog('No matching appointments found', 'info');
+                }
+            } catch (error) {
+                addLog(`Failed to check appointments: ${error.message}`, 'error');
             }
         }
 
-        // Simulate appointment check (replace with actual scraping/API logic)
-        async function simulateAppointmentCheck() {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Random chance of finding appointments
-            const found = Math.random() > 0.7;
-
-            if (found) {
-                const appointments = [];
-                const numAppointments = Math.floor(Math.random() * 3) + 1;
-
-                for (let i = 0; i < numAppointments; i++) {
-                    appointments.push({
-                        center: Array.from(selectedCenters)[Math.floor(Math.random() * selectedCenters.size)],
-                        date: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                        time: Array.from(selectedTimeSlots)[Math.floor(Math.random() * selectedTimeSlots.size)] || '10:00 AM'
-                    });
-                }
-
-                return { found: true, appointments };
-            }
-
-            return { found: false, appointments: [] };
-        }
 
         // Send notifications
         async function sendNotifications(appointments) {

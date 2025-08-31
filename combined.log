@@ -2,3 +2,186 @@
 {"level":"error","message":"Failed to start server: socket hang up","timestamp":"2025-08-29T04:08:59.847Z"}
 {"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T21:41:44.245Z"}
 {"level":"error","message":"Failed to start server: socket hang up","timestamp":"2025-08-29T21:41:45.269Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:19:25.521Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:19:25.743Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:19:25.744Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:20:00.981Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:20:00.981Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:20:01.008Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:20:08.209Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:20:08.438Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:20:08.439Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:20:40.650Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:20:40.650Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:20:40.679Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:20:49.594Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:20:49.866Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:20:49.868Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:20:49.869Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:20:49.881Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:20:49.882Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:21:03.597Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:21:03.597Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:21:03.622Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:22:29.956Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:22:30.206Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:22:30.208Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:22:30.209Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:22:30.221Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:22:30.222Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:26:22.980Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:26:22.980Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:26:23.004Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:26:31.886Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:26:32.111Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:26:32.114Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:26:32.115Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:26:32.127Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:26:32.128Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:28:23.650Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:28:23.650Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:28:23.752Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:28:24.019Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:28:24.244Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:28:24.246Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:28:24.247Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:28:24.260Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:28:24.261Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:32:13.493Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:32:13.493Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:32:13.505Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:32:17.885Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:32:18.085Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:32:18.088Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:32:18.089Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:32:18.101Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:32:18.102Z"}
+{"level":"error","message":"Error checking https://rmvmassdotappt.cxmflow.com/Appointment/Index/2c052fc7-571f-4b76-9790-7e91f103c408?AccessToken=f7fb561d-7dc4-411b-b082-f29b705d26c5: Waiting for selector `.appointment-slot` failed: Waiting failed: 10000ms exceeded","name":"TimeoutError","stack":"TimeoutError: Waiting for selector `.appointment-slot` failed: Waiting failed: 10000ms exceeded\n    at new WaitTask (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/common/WaitTask.js:50:34)\n    at IsolatedWorld.waitForFunction (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Realm.js:25:26)\n    at PQueryHandler.waitFor (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/common/QueryHandler.js:170:95)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async CdpFrame.waitForSelector (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:494:21)\n    at async CdpPage.waitForSelector (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:1351:20)\n    at async RMVScraper.checkRMVUrl (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:184:13)\n    at async RMVMonitorService.checkUserAppointments (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:507:34)\n    at async /Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:644:13","timestamp":"2025-08-29T23:32:38.471Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:37:18.113Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:37:18.120Z"}
+{"level":"error","message":"Error checking https://rmvmassdotappt.cxmflow.com/Appointment/Index/2c052fc7-571f-4b76-9790-7e91f103c408?AccessToken=f7fb561d-7dc4-411b-b082-f29b705d26c5: Waiting for selector `.appointment-slot` failed: Waiting failed: 10000ms exceeded","name":"TimeoutError","stack":"TimeoutError: Waiting for selector `.appointment-slot` failed: Waiting failed: 10000ms exceeded\n    at new WaitTask (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/common/WaitTask.js:50:34)\n    at IsolatedWorld.waitForFunction (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Realm.js:25:26)\n    at PQueryHandler.waitFor (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/common/QueryHandler.js:170:95)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async CdpFrame.waitForSelector (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:494:21)\n    at async CdpPage.waitForSelector (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:1351:20)\n    at async RMVScraper.checkRMVUrl (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:184:13)\n    at async RMVMonitorService.checkUserAppointments (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:507:34)\n    at async /Users/jonathan/Documents/Anthropic/MassRMV/appv1/rmv-monitor-service.js:644:13","timestamp":"2025-08-29T23:38:19.090Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:38:24.892Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:38:24.893Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-29T23:38:24.904Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:38:29.328Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:38:29.550Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:38:29.553Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:38:29.554Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:38:29.567Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:38:29.568Z"}
+{"level":"info","message":"Page title: Office Selection","timestamp":"2025-08-29T23:38:38.031Z"}
+{"level":"info","message":"On office selection page, selecting first available office...","timestamp":"2025-08-29T23:38:38.031Z"}
+{"level":"info","message":"Found 26 offices: Attleboro75 Park Str..., BraintreeBefore Sept..., Brockton490 Forest A..., Chelsea121 Webster A..., Danvers8 Newbury Str..., Easthampton116 Pleas..., Fall River1794 North..., Greenfield18 Miner S..., Haverhill229C Lincol..., Haymarket136 Blackst..., Lawrence73C Winthrop..., Leominster500 Resear..., Lowell77 Middlesex S..., Martha's Vineyard11A..., Milford138 South Mai..., Nantucket16 Broad St..., New Bedford212 Theod..., North Adams33 Main S..., Pittsfield333 East S..., Plymouth40 Industria..., South Yarmouth 1084 ..., Southbridge6 Laroche..., Springfield1250 St. ..., Taunton1 Washington ..., Wilmington355 Middle..., Worcester50 SW Cutof...","timestamp":"2025-08-29T23:38:38.042Z"}
+{"cause":{"name":"ProtocolError"},"level":"error","message":"Error checking https://rmvmassdotappt.cxmflow.com/Appointment/Index/2c052fc7-571f-4b76-9790-7e91f103c408?AccessToken=f7fb561d-7dc4-411b-b082-f29b705d26c5: Protocol error (Input.dispatchMouseEvent): Target closed","name":"TargetCloseError","stack":"TargetCloseError: Protocol error (Input.dispatchMouseEvent): Target closed\n    at CallbackRegistry.clear (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/common/CallbackRegistry.js:75:36)\n    at CdpCDPSession._onClosed (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/CDPSession.js:101:25)\n    at #onClose (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/Connection.js:157:21)\n    at WebSocket.<anonymous> (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/puppeteer-core/lib/cjs/puppeteer/node/NodeWebSocketTransport.js:47:30)\n    at callListener (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/ws/lib/event-target.js:290:14)\n    at WebSocket.onClose (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/ws/lib/event-target.js:220:9)\n    at WebSocket.emit (node:events:518:28)\n    at WebSocket.emitClose (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/ws/lib/websocket.js:265:10)\n    at Socket.socketOnClose (/Users/jonathan/Documents/Anthropic/MassRMV/appv1/node_modules/ws/lib/websocket.js:1289:15)\n    at Socket.emit (node:events:518:28)","timestamp":"2025-08-29T23:38:38.320Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:43:29.581Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:43:29.584Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:45:46.649Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-29T23:45:46.649Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:45:51.051Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:45:51.487Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-29T23:45:58.038Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-29T23:46:00.821Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:46:00.968Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-29T23:46:00.970Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-29T23:46:00.971Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-29T23:46:00.983Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:46:00.984Z"}
+{"level":"info","message":"Page title: Office Selection","timestamp":"2025-08-29T23:47:14.378Z"}
+{"level":"info","message":"On office selection page, using enhanced auto-selection approach...","timestamp":"2025-08-29T23:47:14.378Z"}
+{"level":"info","message":"Found 26 offices","timestamp":"2025-08-29T23:47:14.385Z"}
+{"level":"info","message":"Trying enhanced URL parameters...","timestamp":"2025-08-29T23:47:14.386Z"}
+{"level":"info","message":"Testing URL pattern 1...","timestamp":"2025-08-29T23:47:14.386Z"}
+{"level":"info","message":"URL pattern 1 worked - bypassed location selection!","timestamp":"2025-08-29T23:47:15.438Z"}
+{"level":"info","message":"Successfully selected office using method: url_parameter","timestamp":"2025-08-29T23:47:15.438Z"}
+{"level":"info","message":"Found 0 appointments","timestamp":"2025-08-29T23:47:18.444Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:51:00.996Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:51:00.997Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-29T23:56:01.007Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-29T23:56:01.010Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:01:00.963Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:01:00.965Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:06:00.971Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:06:00.977Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:11:00.982Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:11:00.984Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:16:00.991Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:16:00.995Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:21:01.001Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:21:01.005Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:26:01.035Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:26:01.038Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:31:01.045Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:31:01.048Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:36:01.056Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:36:01.061Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:41:01.068Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:41:01.070Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:46:01.078Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:46:01.083Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:51:01.090Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:51:01.094Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T00:56:01.103Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T00:56:01.105Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:01:01.115Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:01:01.117Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:06:01.125Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:06:01.128Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:11:01.136Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:11:01.139Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:16:01.146Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:16:01.149Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:21:01.052Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:21:01.055Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:26:01.054Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:26:01.056Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:31:01.054Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:31:01.056Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:36:01.054Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:36:01.056Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:41:01.055Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:41:01.060Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:46:01.062Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:46:01.063Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:51:01.126Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:51:01.130Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T01:56:01.133Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T01:56:01.135Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:01:01.140Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:01:01.143Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:06:01.147Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:06:01.149Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:11:01.151Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:11:01.154Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:16:01.159Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:16:01.161Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:21:01.164Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:21:01.166Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:26:01.168Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T02:26:01.171Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T02:31:01.175Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-30T06:37:45.730Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T06:37:46.164Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-30T06:37:46.166Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-30T06:37:46.167Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-30T06:37:46.179Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T06:37:46.180Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T06:42:46.185Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T06:42:46.187Z"}
+{"level":"info","message":"Received SIGINT, shutting down gracefully...","timestamp":"2025-08-30T06:42:56.004Z"}
+{"level":"info","message":"Starting RMV Monitor Service...","timestamp":"2025-08-30T07:00:00.831Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T07:00:01.246Z"}
+{"level":"info","message":"RMV Monitor Service started successfully","timestamp":"2025-08-30T07:00:01.248Z"}
+{"level":"info","message":"API Server running on port 3000","timestamp":"2025-08-30T07:00:01.249Z"}
+{"level":"info","message":"Service will expire on 9/3/2025","timestamp":"2025-08-30T07:00:01.260Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T07:00:01.261Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T07:05:01.263Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T07:05:01.265Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T07:10:01.267Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T07:10:01.271Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T07:15:01.274Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T07:15:01.275Z"}
+{"level":"info","message":"Starting appointment check cycle...","timestamp":"2025-08-30T07:20:01.253Z"}
+{"level":"info","message":"Checking for 0 active users","timestamp":"2025-08-30T07:20:01.256Z"}
+{"level":"info","message":"Received SIGTERM, shutting down gracefully...","timestamp":"2025-08-30T07:20:26.506Z"}
+{"level":"info","message":"Stopping RMV Monitor Service...","timestamp":"2025-08-30T07:20:26.506Z"}
+{"level":"info","message":"RMV Monitor Service stopped","timestamp":"2025-08-30T07:20:26.515Z"}

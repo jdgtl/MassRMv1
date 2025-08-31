@@ -281,37 +281,72 @@ class DirectUrlScraper {
       // Add human-like randomization
       await page.waitForTimeout(1000 + Math.random() * 2000);
       
-      // Try multiple selector patterns for the location
-      const locationSelectors = [
-        `[data-value="${location.id}"]`,
-        `[value="${location.id}"]`,
-        `.QflowObjectItem[data-value="${location.id}"]`,
-        `.location-item[data-id="${location.id}"]`,
-        `button[data-location-id="${location.id}"]`,
-        `input[value="${location.id}"]`
+      // PRECISE RMV LOCATION SELECTOR: Based on actual locations-page.html
+      const rmvLocationSelectors = [
+        // Primary: Exact RMV container selectors with data-id
+        `#f61577d6-d75d-41c5-a6ab-f7a261ba5cfb .QflowObjectItem[data-id="${location.id}"]`,
+        `#539af26b-8d29-4bcc-9d48-a68591c638ce .QflowObjectItem[data-id="${location.id}"]`,
+        `.ListView .QflowObjectItem[data-id="${location.id}"]`,
+        
+        // Secondary: Generic QflowObjectItem patterns
+        `.QflowObjectItem[data-id="${location.id}"]`,
+        `button.QflowObjectItem[data-id="${location.id}"]`,
+        
+        // Fallback: Any button with matching data-id
+        `button[data-id="${location.id}"]`,
+        `[data-id="${location.id}"]`
       ];
       
       let locationElement = null;
-      for (const selector of locationSelectors) {
+      for (const selector of rmvLocationSelectors) {
         locationElement = await page.$(selector);
         if (locationElement) {
-          console.log(`✅ Found location element with selector: ${selector}`);
+          console.log(`✅ Found location element with RMV selector: ${selector}`);
           break;
         }
       }
       
-      // Fallback: find by text content
+      // Enhanced fallback: find by text content with RMV-specific containers
       if (!locationElement) {
-        console.log('🔍 Searching for location by text content...');
-        locationElement = await page.evaluateHandle((locationName) => {
-          const elements = document.querySelectorAll('.QflowObjectItem, .location-item, button, a');
-          for (const element of elements) {
-            if (element.textContent?.toLowerCase().includes(locationName.toLowerCase())) {
-              return element;
+        console.log('🔍 Searching for location by text content in RMV containers...');
+        locationElement = await page.evaluateHandle((locationName, locationId) => {
+          // Search in known RMV containers first
+          const rmvContainers = [
+            '#f61577d6-d75d-41c5-a6ab-f7a261ba5cfb',
+            '#539af26b-8d29-4bcc-9d48-a68591c638ce',
+            '.ListView'
+          ];
+          
+          for (const containerId of rmvContainers) {
+            const container = document.querySelector(containerId);
+            if (container) {
+              const buttons = container.querySelectorAll('.QflowObjectItem, button[data-id]');
+              for (const button of buttons) {
+                const buttonText = button.textContent?.toLowerCase() || '';
+                const buttonDataId = button.getAttribute('data-id');
+                
+                // Match by name or data-id
+                if ((buttonText.includes(locationName.toLowerCase()) || buttonDataId === locationId.toString()) && 
+                    button.classList.contains('QflowObjectItem')) {
+                  return button;
+                }
+              }
             }
           }
+          
+          // Global fallback
+          const allButtons = document.querySelectorAll('.QflowObjectItem, button[data-id], .location-item');
+          for (const button of allButtons) {
+            const buttonText = button.textContent?.toLowerCase() || '';
+            const buttonDataId = button.getAttribute('data-id');
+            
+            if (buttonText.includes(locationName.toLowerCase()) || buttonDataId === locationId.toString()) {
+              return button;
+            }
+          }
+          
           return null;
-        }, location.name);
+        }, location.name, location.id);
         
         if (await locationElement.evaluate(el => el === null)) {
           locationElement = null;
@@ -340,18 +375,68 @@ class DirectUrlScraper {
         // Wait for page response
         await page.waitForTimeout(2000 + Math.random() * 1000);
         
-        // Check if location was selected successfully
+        // PRECISE RMV APPOINTMENT PAGE DETECTION: Based on actual attleboro-landing-page.html
         const progressedToNextStep = await page.evaluate(() => {
-          // Check for appointment elements
-          const appointmentSelectors = ['.appointment-slot', '.time-slot', '[data-time]', '.calendar-day'];
-          const hasAppointments = appointmentSelectors.some(sel => document.querySelector(sel));
+          // Primary: Look for exact RMV appointment elements
+          const rmvAppointmentSelectors = [
+            '.ServiceAppointmentDateTime',         // Main appointment slots
+            '.DateTimeGrouping-Control',           // Morning/Afternoon groups
+            '.DateTimeGrouping-Container',         // Container for appointment groups
+            '.AppointmentDateTime',                // Alternative appointment container class
+            '[data-datetime]',                     // Elements with datetime attributes
+            '[data-serviceid]',                    // Elements with service ID
+            '[data-appointmenttypeid]'             // Elements with appointment type ID
+          ];
           
-          // Check if step progressed
-          const stepText = document.body.textContent;
-          const progressedStep = stepText.includes('Step 2') || stepText.includes('Step 3') || 
-                               stepText.includes('Date') || stepText.includes('Time');
+          const hasRMVAppointments = rmvAppointmentSelectors.some(sel => 
+            document.querySelector(sel) !== null
+          );
           
-          return { hasAppointments, progressedStep, currentUrl: window.location.href };
+          // Secondary: Check for appointment-related text and containers
+          const appointmentContainerSelectors = [
+            '#fc391d57-707b-4af3-b523-3d7305ed4eac',  // Specific appointment container ID
+            '.step-control-container.AppointmentDateTime', // AppointmentDateTime step container
+            '.datetime-grouping'                     // Datetime grouping container
+          ];
+          
+          const hasAppointmentContainer = appointmentContainerSelectors.some(sel => 
+            document.querySelector(sel) !== null
+          );
+          
+          // Check for appointment-related text content
+          const bodyText = document.body.textContent.toLowerCase();
+          const appointmentTextIndicators = [
+            'select an appointment date and time',
+            'please select an appointment',
+            'servicepointmentdatetime',
+            'morning', 'afternoon',  // Group titles
+            'available',  // Available slots indicator
+            'appointment'  // General appointment reference
+          ];
+          
+          const hasAppointmentText = appointmentTextIndicators.some(indicator => 
+            bodyText.includes(indicator.toLowerCase())
+          );
+          
+          // Check if we're still on location selection (negative indicator)
+          const stillOnLocationSelection = document.querySelector('#f61577d6-d75d-41c5-a6ab-f7a261ba5cfb .QflowObjectItem') !== null ||
+                                         document.querySelector('.ListView .QflowObjectItem') !== null;
+          
+          // Count actual appointment elements for confidence
+          const appointmentElementCount = document.querySelectorAll('.ServiceAppointmentDateTime').length;
+          const groupControlCount = document.querySelectorAll('.DateTimeGrouping-Control').length;
+          
+          return { 
+            hasAppointments: hasRMVAppointments,
+            hasAppointmentContainer: hasAppointmentContainer,
+            hasAppointmentText: hasAppointmentText,
+            stillOnLocationSelection: stillOnLocationSelection,
+            appointmentElementCount: appointmentElementCount,
+            groupControlCount: groupControlCount,
+            progressedStep: hasRMVAppointments || hasAppointmentContainer,
+            currentUrl: window.location.href,
+            pageTitle: document.title
+          };
         });
         
         if (progressedToNextStep.hasAppointments || progressedToNextStep.progressedStep) {
@@ -670,21 +755,30 @@ async function enhanceScraperWithDirectUrls(page, locations, originalFormJourney
       if (selectionResult.success) {
         console.log(`✅ Location selected successfully using method: ${selectionResult.method}`);
         
-        // Extract appointment slots using correct RMV selectors
+        // PRECISE RMV APPOINTMENT EXTRACTION: Based on actual attleboro-landing-page.html
         const availableSlots = await page.evaluate(() => {
           const slots = [];
           
-          // RMV uses .ServiceAppointmentDateTime elements with data-datetime attributes
+          // Primary method: Extract from ServiceAppointmentDateTime elements (from actual appointment page)
           const appointmentElements = document.querySelectorAll('.ServiceAppointmentDateTime');
+          console.log(`Found ${appointmentElements.length} ServiceAppointmentDateTime elements`);
           
           appointmentElements.forEach(element => {
-            // Get the data-datetime attribute which contains the full date/time
-            const dateTimeAttr = element.getAttribute('data-datetime');
-            const timeText = element.textContent.trim();
-            const isDisabled = element.classList.contains('disabled') || element.disabled;
-            const ariaLabel = element.getAttribute('aria-label');
+            // Extract all available data from the actual HTML structure
+            const dateTimeAttr = element.getAttribute('data-datetime'); // "10/8/2025 9:30:00 AM"
+            const serviceId = element.getAttribute('data-serviceid'); // "226"
+            const appointmentTypeId = element.getAttribute('data-appointmenttypeid'); // "38"
+            const ariaLabel = element.getAttribute('aria-label'); // "Wednesday October 8 9:30 AM"
+            const timeText = element.textContent.trim(); // "9:30 AM"
+            const tabindex = element.getAttribute('tabindex'); // "0" for visible, "-1" for collapsed
+            const ariaChecked = element.getAttribute('aria-checked'); // "false"
             
-            if (dateTimeAttr && timeText && !isDisabled) {
+            // Check if element is disabled or hidden
+            const isDisabled = element.classList.contains('disabled') || element.disabled;
+            const isValid = element.classList.contains('valid');
+            const isInExpandedGroup = element.closest('.DateTimeGrouping-Container')?.classList.contains('expanded');
+            
+            if (dateTimeAttr && timeText && !isDisabled && isValid) {
               // Parse the datetime: "10/8/2025 9:30:00 AM"
               const dateTimeMatch = dateTimeAttr.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}:\d{2}:\d{2}\s?(AM|PM))/);
               let date = null, time = null;
@@ -694,30 +788,77 @@ async function enhanceScraperWithDirectUrls(page, locations, originalFormJourney
                 time = dateTimeMatch[2].replace(':00', ''); // "9:30 AM" (remove seconds)
               }
               
+              // Determine if slot is immediately available (expanded group) or requires click
+              const parentGroup = element.closest('.DateTimeGrouping-Group');
+              const groupControl = parentGroup?.querySelector('.DateTimeGrouping-Control');
+              const groupTitle = groupControl?.querySelector('.group-title')?.textContent?.trim() || '';
+              const groupCount = groupControl?.querySelector('.group-number')?.textContent?.trim() || '';
+              
               slots.push({
                 displayText: timeText, // "9:30 AM"
                 fullDateTime: dateTimeAttr, // "10/8/2025 9:30:00 AM"
                 date: date, // "10/8/2025"
-                time: time, // "9:30 AM" 
+                time: time, // "9:30 AM"
                 available: true, // All visible ServiceAppointmentDateTime elements are available
                 ariaLabel: ariaLabel, // "Wednesday October 8 9:30 AM"
                 element: 'ServiceAppointmentDateTime',
                 classes: element.className,
-                serviceid: element.getAttribute('data-serviceid'),
-                appointmenttypeid: element.getAttribute('data-appointmenttypeid')
+                serviceid: serviceId, // "226"
+                appointmenttypeid: appointmentTypeId, // "38"
+                tabindex: tabindex, // Indicates visibility state
+                ariaChecked: ariaChecked,
+                isInExpandedGroup: isInExpandedGroup,
+                groupTitle: groupTitle, // "Morning" or "Afternoon"
+                groupCount: groupCount, // "9 Available"
+                selector: '.ServiceAppointmentDateTime[data-datetime="' + dateTimeAttr + '"]'
               });
             }
           });
           
-          // Also check for appointment groupings to get count info
+          // Enhanced group information extraction with counts and expansion states
           const groupControls = document.querySelectorAll('.DateTimeGrouping-Control');
-          const groupInfo = Array.from(groupControls).map(control => ({
-            title: control.querySelector('.group-title')?.textContent?.trim() || '',
-            count: control.querySelector('.group-number')?.textContent?.trim() || '',
-            expanded: control.getAttribute('aria-pressed') === 'true'
-          }));
+          const groupInfo = Array.from(groupControls).map(control => {
+            const title = control.querySelector('.group-title')?.textContent?.trim() || '';
+            const count = control.querySelector('.group-number')?.textContent?.trim() || '';
+            const expanded = control.getAttribute('aria-pressed') === 'true';
+            const ariaLabel = control.getAttribute('aria-label') || '';
+            const controlsId = control.getAttribute('aria-controls') || '';
+            const classes = control.className || '';
+            
+            return {
+              title: title, // "Morning", "Afternoon"
+              count: count, // "9 Available", "10 Available"
+              expanded: expanded, // true/false
+              ariaLabel: ariaLabel, // "Morning of Wednesday October 8 - Select to view 9 available times"
+              controlsId: controlsId, // ID of container it controls
+              classes: classes, // "DateTimeGrouping-Control Morning"
+              selector: '.DateTimeGrouping-Control[aria-controls="' + controlsId + '"]'
+            };
+          });
           
-          return { slots, groupInfo };
+          // Extract day column information
+          const dayColumns = document.querySelectorAll('.DateTimeGrouping-Column');
+          const dayInfo = Array.from(dayColumns).map(column => {
+            const ariaLabel = column.getAttribute('aria-label') || '';
+            const dayElement = column.querySelector('.DateTimeGrouping-Day');
+            const dayText = dayElement ? dayElement.textContent.trim() : '';
+            const groups = column.querySelectorAll('.DateTimeGrouping-Group').length;
+            
+            return {
+              ariaLabel: ariaLabel, // "<p>Wed</p><p>Oct 8, 2025</p>"
+              dayText: dayText, // "Wed\nOct 8, 2025"
+              groupCount: groups // Number of Morning/Afternoon groups
+            };
+          });
+          
+          return { 
+            slots, 
+            groupInfo,
+            dayInfo,
+            totalElements: appointmentElements.length,
+            totalDays: dayColumns.length,
+            totalGroups: groupControls.length
+          };
         });
         
         console.log(`📅 Found ${availableSlots.slots.length} appointment slots for ${location.name}`);

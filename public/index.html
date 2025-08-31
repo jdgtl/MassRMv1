@@ -780,6 +780,23 @@
                 max-width: 100%;
             }
         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sections-hidden {
+            display: none;
+        }
+
+        .section-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -789,55 +806,76 @@
             <p>Automated monitoring and booking system for Mass RMV appointments</p>
         </div>
 
-        <!-- Section 1: Configuration -->
+        <!-- Section 1: RMV Account Connection -->
         <div class="card">
             <div class="card-header">
-                <h2><span class="section-number">1</span>⚙️ Personal Information</h2>
-                <span class="status-badge status-inactive" id="monitorStatus">INACTIVE</span>
+                <h2><span class="section-number">1</span>🔗 Connect Your RMV Account</h2>
+                <span class="status-badge status-pending" id="connectionStatus">DISCONNECTED</span>
             </div>
 
             <div class="section-instructions">
-                <div class="main-instruction">Enter your personal information for appointment booking and notifications</div>
-                <div class="sub-instruction">All fields marked with * are required. This information will be used to automatically book appointments and send notifications when appointments are found.</div>
+                <div class="main-instruction">Paste your personalized RMV scheduling link you received from MassRMV via email</div>
+                <div class="sub-instruction">Your personal information will be automatically extracted from your RMV account. This link contains your unique access token and appointment details.</div>
+                <div style="color: #9ca3af; font-size: 0.85rem; margin-top: 10px; font-family: monospace;">
+                    Example: https://rmvmassdotappt.cxmflow.com/Appointment/Index/abc123...?AccessToken=xyz789...
+                </div>
+                <div style="margin-top: 15px; padding: 12px; background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px;">
+                    <div style="color: #1e40af; font-size: 0.9rem; font-weight: 500;">
+                        📝 Don't have a personalized link yet?
+                    </div>
+                    <div style="color: #374151; font-size: 0.85rem; margin-top: 5px;">
+                        You can request one from the official MassRMV appointment system. 
+                        <a href="https://atlas-myrmv.massdot.state.ma.us/myrmv/_/" target="_blank" style="color: #1d4ed8; text-decoration: underline; font-weight: 500;">
+                            Click here to schedule your appointment
+                        </a> 
+                        and receive your personalized link via email.
+                    </div>
+                </div>
             </div>
 
-            <div class="form-grid">
+            <div class="form-grid" style="grid-template-columns: 1fr 200px; gap: 20px; align-items: start;">
                 <div class="form-group">
-                    <label for="firstName">First Name *</label>
-                    <input type="text" id="firstName" placeholder="John" required>
-                </div>
-                <div class="form-group">
-                    <label for="lastName">Last Name *</label>
-                    <input type="text" id="lastName" placeholder="Doe" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" placeholder="john.doe@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone *</label>
-                    <input type="tel" id="phone" placeholder="(555) 123-4567" required>
+                    <label for="rmvUrl">RMV Scheduling URL *</label>
+                    <input type="url" id="rmvUrl" placeholder="Paste your RMV scheduling link here..." required>
                 </div>
                 <div class="form-group">
                     <label for="zipCode">ZIP Code *</label>
                     <input type="text" id="zipCode" placeholder="02101" maxlength="5" pattern="[0-9]{5}" required>
+                    <div id="cityDisplay" style="font-size: 0.85rem; color: #059669; margin-top: 5px; font-weight: 500; min-height: 20px;">
+                        <!-- City name will appear here -->
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="city">City/Town</label>
-                    <input type="text" id="city">
-                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="connectRMV" class="btn btn-primary" style="padding: 12px 30px; font-size: 16px;">
+                    <span id="connectText">🔗 Connect to RMV Account</span>
+                </button>
+            </div>
+
+            <!-- Loading state -->
+            <div id="extractionLoader" style="display: none; text-align: center; margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <div class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px;"></div>
+                <strong>Connecting to your RMV account...</strong>
+                <div style="margin-top: 8px; color: #6b7280;">Extracting your personal information securely...</div>
+            </div>
+
+            <!-- Success notification -->
+            <div id="extractionSuccess" style="display: none; margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #bbf7d0; border-radius: 8px;">
+                <div style="color: #059669; font-weight: 600; margin-bottom: 8px;">✅ Successfully connected to your RMV account!</div>
+                <div style="color: #065f46; font-size: 0.9rem;">Your personal information has been extracted and the system is ready to monitor appointments for you.</div>
             </div>
         </div>
 
         <!-- Section 2: Service Centers -->
-        <div class="card">
+        <div class="card sections-hidden" id="section2">
             <div class="card-header">
                 <h2><span class="section-number">2</span>📍 Service Center Selection</h2>
             </div>
 
             <div class="section-instructions">
                 <div class="main-instruction">Select which RMV service centers to monitor for available appointments</div>
-                <div class="sub-instruction">Choose multiple locations to increase your chances of finding an appointment. Click on locations to select/deselect them. Selected centers will be highlighted in blue. Use regional buttons for quick selection.</div>
+                <div class="sub-instruction">Choose multiple locations to increase your chances of finding an appointment. Click on locations to select/deselect them. Selected centers will be highlighted in blue. Use regional buttons for quick selection. <strong>Maximum 8 locations</strong> can be selected to avoid overloading RMV servers.</div>
             </div>
 
             <div class="controls-container">
@@ -849,8 +887,7 @@
                         <button class="btn-region" onclick="selectRegion('north')">North Shore</button>
                         <button class="btn-region" onclick="selectRegion('south')">South Shore</button>
                         <button class="btn-region" onclick="selectRegion('islands')">Islands</button>
-                        <button class="btn-region" onclick="selectRegion('all')">All</button>
-                        <button class="btn-region btn-clear" onclick="selectRegion('none')">✕</button>
+                        <button class="btn-region btn-clear" onclick="selectRegion('none')">Clear</button>
                     </div>
                     <div class="control-label">Region</div>
                 </div>
@@ -869,39 +906,10 @@
             </div>
         </div>
 
-        <!-- Section 3: RMV Booking Configuration -->
-        <div class="card">
+        <!-- Section 3: Time Preferences -->
+        <div class="card sections-hidden" id="section3">
             <div class="card-header">
-                <h2><span class="section-number">3</span>🔗 RMV Booking Configuration</h2>
-            </div>
-            <div class="section-instructions">
-                <div class="main-instruction">Enter the RMV appointment booking URL that the system should monitor</div>
-                <div class="sub-instruction">Provide your RMV appointment booking URL and set the expiration date. The system will search for available appointments and display them with your preferences highlighted.</div>
-            </div>
-
-            <div class="booking-grid">
-                <div class="form-group">
-                    <label for="rmvUrl">RMV Appointment Booking URL *</label>
-                    <input type="url" id="rmvUrl" placeholder="https://atlas-myrmv.massdot.state.ma.us/myrmv/... or https://cxmflow.com/..." required>
-                </div>
-                <div class="form-group">
-                    <label for="linkExpiration">Link Expiration Date</label>
-                    <div class="date-input-wrapper">
-                        <input type="date" id="linkExpiration" class="date-input">
-                        <span class="date-icon">⚠️</span>
-                    </div>
-                    <div class="link-expiration-info">
-                        System will notify you before this date to renew the booking link
-                    </div>
-                </div>
-            </div>
-            
-        </div>
-
-        <!-- Section 4: Time Preferences -->
-        <div class="card">
-            <div class="card-header">
-                <h2><span class="section-number">4</span>🕐 Appointment Time Preferences</h2>
+                <h2><span class="section-number">3</span>🕐 Appointment Time Preferences</h2>
             </div>
 
             <div class="section-instructions">
@@ -941,10 +949,11 @@
             </div>
         </div>
 
-        <!-- Section 5: Notifications -->
-        <div class="card">
+        <!-- Section 4: Notifications -->
+        <div class="card sections-hidden" id="section4">
             <div class="card-header">
-                <h2><span class="section-number">5</span>🔔 Notification Settings</h2>
+                <h2><span class="section-number">4</span>🔔 Notification Settings</h2>
+                <span class="status-badge status-inactive" id="monitorStatus">INACTIVE</span>
             </div>
 
             <div class="section-instructions">
@@ -1005,15 +1014,15 @@
 
 
             <div style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="startMonitoring()">Start Monitoring</button>
+                <button class="btn btn-primary" id="startBtn" onclick="startMonitoring()">Start Monitoring</button>
                 <button class="btn btn-danger" onclick="stopMonitoring()" style="display: none;" id="stopBtn">Stop Monitoring</button>
             </div>
         </div>
 
-        <!-- Section 6: Available Appointments -->
-        <div class="card" id="appointmentsSection" style="display: none;">
+        <!-- Section 5: Available Appointments -->
+        <div class="card sections-hidden" id="section5">
             <div class="card-header">
-                <h2><span class="section-number">6</span>📅 Available Appointments</h2>
+                <h2><span class="section-number">5</span>📅 Available Appointments</h2>
             </div>
             <div class="section-instructions">
                 <div class="main-instruction">Current appointment availability for selected locations</div>
@@ -1021,17 +1030,24 @@
             </div>
 
             <div id="appointmentsContainer">
-                <div class="appointments-loading">
+                <div class="appointments-inactive" id="appointmentsInactive">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
+                        <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
+                        <p>Click "Start Monitoring" in Section 4 to begin searching for appointments</p>
+                    </div>
+                </div>
+                <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
                     <div class="loading-spinner"></div>
                     <p>Searching for appointments...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Section 7: Statistics -->
-        <div class="card">
+        <!-- Section 6: Statistics -->
+        <div class="card sections-hidden" id="section6">
             <div class="card-header">
-                <h2><span class="section-number">7</span>📊 Live Statistics</h2>
+                <h2><span class="section-number">6</span>📊 Live Statistics</h2>
             </div>
 
             <div class="section-instructions">
@@ -1059,10 +1075,10 @@
             </div>
         </div>
 
-        <!-- Section 8: Activity Log -->
-        <div class="card">
+        <!-- Section 7: Activity Log -->
+        <div class="card sections-hidden" id="section7">
             <div class="card-header">
-                <h2><span class="section-number">8</span>📝 Activity Log</h2>
+                <h2><span class="section-number">7</span>📝 Activity Log</h2>
                 <button class="btn btn-secondary" onclick="clearLog()" style="padding: 8px 16px; font-size: 0.9rem;">Clear Log</button>
             </div>
 
@@ -1214,42 +1230,157 @@
             return R * c;
         }
 
+        // RMV Connection and Data Extraction
+        let extractedPersonalData = null;
+        
+        function showSections() {
+            // Show all hidden sections with fade-in animation
+            const hiddenSections = document.querySelectorAll('.sections-hidden');
+            hiddenSections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.classList.remove('sections-hidden');
+                    section.classList.add('section-fade-in');
+                }, index * 200); // Stagger the animations
+            });
+        }
+
+        async function connectToRMV() {
+            const rmvUrl = document.getElementById('rmvUrl').value.trim();
+            const zipCode = document.getElementById('zipCode').value.trim();
+            
+            if (!rmvUrl) {
+                alert('Please enter your RMV scheduling URL');
+                return;
+            }
+
+            if (!zipCode || !/^\d{5}$/.test(zipCode)) {
+                alert('Please enter a valid 5-digit ZIP code');
+                return;
+            }
+
+            if (!rmvUrl.includes('rmvmassdotappt.cxmflow.com')) {
+                alert('Please enter a valid RMV appointment URL from rmvmassdotappt.cxmflow.com');
+                return;
+            }
+
+            const connectBtn = document.getElementById('connectRMV');
+            const loader = document.getElementById('extractionLoader');
+            const successDiv = document.getElementById('extractionSuccess');
+            const statusBadge = document.getElementById('connectionStatus');
+            
+            // Show loading state
+            connectBtn.disabled = true;
+            loader.style.display = 'block';
+            successDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/extract-personal-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: rmvUrl })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    extractedPersonalData = result.personalData;
+                    
+                    // Update UI with success
+                    loader.style.display = 'none';
+                    successDiv.style.display = 'block';
+                    statusBadge.textContent = 'CONNECTED';
+                    statusBadge.className = 'status-badge status-active';
+                    
+                    // Show other sections
+                    showSections();
+                    
+                    // Update notification info with extracted data
+                    updateNotificationInfo();
+                    
+                    // Scroll to next section
+                    setTimeout(() => {
+                        document.getElementById('section2').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 1000);
+                    
+                } else {
+                    throw new Error('Failed to extract personal data');
+                }
+                
+            } catch (error) {
+                console.error('RMV connection failed:', error);
+                loader.style.display = 'none';
+                alert('Failed to connect to your RMV account. Please check your URL and try again.');
+                connectBtn.disabled = false;
+            }
+        }
+
         // Initialize UI
         function initializeUI() {
+            console.log('Initializing UI...');
+            
+            // Add RMV connection event listener
+            const connectBtn = document.getElementById('connectRMV');
+            console.log('Connect button found:', connectBtn);
+            if (connectBtn) {
+                connectBtn.addEventListener('click', connectToRMV);
+                console.log('Connect button event listener added');
+            }
+            
+            // Add ZIP code input listener for distance sorting
+            const zipCodeField = document.getElementById('zipCode');
+            console.log('ZIP code field found:', zipCodeField);
+            if (zipCodeField) {
+                zipCodeField.addEventListener('input', handleZipCodeInput);
+                console.log('ZIP code event listener added');
+            }
+            
             // Initially populate service centers alphabetically
             populateServiceCenters();
             // Disable distance sorting initially (no ZIP entered)
-            document.getElementById('sortDistance').disabled = true;
+            const distanceSort = document.getElementById('sortDistance');
+            if (distanceSort) {
+                distanceSort.disabled = true;
+            }
 
-            // Set default dates
+            // Set default dates for time preferences
             const today = new Date();
-            const linkExp = new Date();
-            linkExp.setDate(today.getDate() + 5); // 5 days default as requested
+            const endDate = new Date();
+            endDate.setDate(today.getDate() + 30); // 30 days default
 
-            document.getElementById('startDate').value = today.toISOString().split('T')[0]; // Current date
-            document.getElementById('endDate').value = linkExp.toISOString().split('T')[0]; // Link expiration date
-            document.getElementById('linkExpiration').value = linkExp.toISOString().split('T')[0];
+            const startDateEl = document.getElementById('startDate');
+            const endDateEl = document.getElementById('endDate');
+            
+            if (startDateEl) startDateEl.value = today.toISOString().split('T')[0];
+            if (endDateEl) endDateEl.value = endDate.toISOString().split('T')[0];
 
             // Initialize time sliders
             updateTimeDisplay();
 
-            // Add event listeners
-            document.getElementById('startTimeSlider').addEventListener('input', updateTimeDisplay);
-            document.getElementById('endTimeSlider').addEventListener('input', updateTimeDisplay);
-            document.getElementById('zipCode').addEventListener('input', handleZipCodeInput);
-            document.getElementById('email').addEventListener('input', updateNotificationInfo);
-            document.getElementById('phone').addEventListener('input', formatPhoneInput);
+            // Add event listeners for time sliders
+            const startSlider = document.getElementById('startTimeSlider');
+            const endSlider = document.getElementById('endTimeSlider');
+            if (startSlider) startSlider.addEventListener('input', updateTimeDisplay);
+            if (endSlider) endSlider.addEventListener('input', updateTimeDisplay);
             
-            // Notification toggle listeners
-            document.getElementById('emailNotifications').addEventListener('change', toggleNotificationInfo);
-            document.getElementById('smsNotifications').addEventListener('change', toggleNotificationInfo);
-            document.getElementById('pushNotifications').addEventListener('change', toggleNotificationInfo);
-            document.getElementById('webhookNotifications').addEventListener('change', toggleConditionalInput);
+            // Notification toggle listeners - only add if elements exist
+            const emailNotifications = document.getElementById('emailNotifications');
+            const smsNotifications = document.getElementById('smsNotifications');
+            const pushNotifications = document.getElementById('pushNotifications');
+            const webhookNotifications = document.getElementById('webhookNotifications');
+            
+            if (emailNotifications) emailNotifications.addEventListener('change', toggleNotificationInfo);
+            if (smsNotifications) smsNotifications.addEventListener('change', toggleNotificationInfo);
+            if (pushNotifications) pushNotifications.addEventListener('change', toggleNotificationInfo);
+            if (webhookNotifications) webhookNotifications.addEventListener('change', toggleConditionalInput);
 
             // Request notification permission
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
+            
+            console.log('UI initialization completed');
         }
 
         // Populate service centers
@@ -1280,13 +1411,16 @@
         // Handle ZIP code input
         function handleZipCodeInput() {
             const zipCode = document.getElementById('zipCode').value;
-            const cityField = document.getElementById('city');
+            const cityDisplay = document.getElementById('cityDisplay');
+            
+            console.log('ZIP code input:', zipCode, 'Length:', zipCode.length);
             
             if (zipCode.length === 5 && /^\d{5}$/.test(zipCode)) {
+                console.log('Valid ZIP code detected, calling lookupZipCode');
                 lookupZipCode(zipCode);
             } else if (zipCode.length === 0) {
                 // Clear city when ZIP is removed
-                cityField.value = '';
+                cityDisplay.textContent = '';
                 userZipCoords = null;
                 centersWithDistance = null;
                 // Reset to alphabetical sort
@@ -1294,7 +1428,7 @@
                 addLog('ZIP code cleared - reset to alphabetical sorting', 'info');
             } else if (zipCode.length > 0 && zipCode.length < 5) {
                 // Clear city while typing invalid ZIP
-                cityField.value = '';
+                cityDisplay.textContent = '';
             }
         }
 
@@ -1332,8 +1466,10 @@
 
         // Lookup ZIP code and update city, calculate distances
         function lookupZipCode(zipCode) {
+            console.log('lookupZipCode called with:', zipCode);
+            
             if (!zipCode || zipCode.length < 5) {
-                document.getElementById('city').value = '';
+                document.getElementById('cityDisplay').textContent = '';
                 userZipCoords = null;
                 centersWithDistance = [];
                 document.getElementById('sortDistance').disabled = true;
@@ -1343,10 +1479,15 @@
                 return;
             }
             
+            console.log('Looking up ZIP:', zipCode, 'in zipCoords object');
+            console.log('zipCoords[zipCode]:', zipCoords[zipCode]);
+            
             // In production, this would call a real geocoding API
             if (zipCoords[zipCode]) {
                 const coords = zipCoords[zipCode];
-                document.getElementById('city').value = coords.city;
+                console.log('Found coordinates:', coords);
+                console.log('Setting city display to:', coords.city);
+                document.getElementById('cityDisplay').textContent = coords.city;
                 userZipCoords = coords;
                 
                 // Calculate distances and sort service centers
@@ -1372,7 +1513,7 @@
                 addLog(`ZIP ${zipCode} found: ${coords.city}. Distance sorting enabled.`, 'info');
             } else {
                 // Handle unknown ZIP - clear city and keep alphabetical
-                document.getElementById('city').value = '';
+                document.getElementById('cityDisplay').textContent = '';
                 userZipCoords = null;
                 centersWithDistance = [];
                 document.getElementById('sortDistance').disabled = true;
@@ -1389,21 +1530,7 @@
         function selectRegion(regionKey) {
             const regionButton = event.target;
             
-            if (regionKey === 'all') {
-                serviceCenters.forEach(center => {
-                    const element = document.querySelector(`[data-name="${center.name}"]`);
-                    if (element) {
-                        element.classList.add('selected');
-                        selectedCenters.add(center.name);
-                    }
-                });
-                // Clear all active regions and mark all as active
-                document.querySelectorAll('.btn-region:not(.btn-clear)').forEach(btn => {
-                    btn.classList.add('active');
-                });
-                activeRegions = new Set(['boston', 'worcester', 'springfield', 'north', 'south', 'islands']);
-                addLog(`Selected all ${serviceCenters.length} service centers`, 'info');
-            } else if (regionKey === 'none') {
+            if (regionKey === 'none') {
                 selectedCenters.clear();
                 activeRegions.clear();
                 document.querySelectorAll('.service-center').forEach(el => {
@@ -1428,17 +1555,25 @@
                     });
                     addLog(`Deselected ${regions[regionKey].length} centers in ${regionKey} region`, 'info');
                 } else {
-                    // Activate region
+                    // Activate region - check maximum limit
+                    const regionCenters = regions[regionKey];
+                    const newTotalCount = selectedCenters.size + regionCenters.length;
+                    
+                    if (newTotalCount > 8) {
+                        alert(`Maximum 8 locations selected. Cannot select ${regionCenters.length} locations in this region. Currently selected: ${selectedCenters.size}`);
+                        return;
+                    }
+                    
                     activeRegions.add(regionKey);
                     regionButton.classList.add('active');
-                    regions[regionKey].forEach(centerName => {
+                    regionCenters.forEach(centerName => {
                         const element = document.querySelector(`[data-name="${centerName}"]`);
                         if (element) {
                             element.classList.add('selected');
                             selectedCenters.add(centerName);
                         }
                     });
-                    addLog(`Selected ${regions[regionKey].length} centers in ${regionKey} region`, 'info');
+                    addLog(`Selected ${regionCenters.length} centers in ${regionKey} region (Total: ${selectedCenters.size}/8)`, 'info');
                 }
             }
         }
@@ -1459,11 +1594,12 @@
         }
 
         function updateNotificationInfo() {
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
+            // Use extracted personal data if available, otherwise fallback to empty state
+            const email = extractedPersonalData?.email || '';
+            const phone = extractedPersonalData?.phone || '';
             
-            document.getElementById('emailDisplay').textContent = email || '(enter email above)';
-            document.getElementById('phoneDisplay').textContent = phone || '(enter phone above)';
+            document.getElementById('emailDisplay').textContent = email || '(connect RMV account to auto-fill)';
+            document.getElementById('phoneDisplay').textContent = phone || '(connect RMV account to auto-fill)';
         }
 
         // Toggle notification info visibility
@@ -1506,12 +1642,19 @@
             }
         }
 
-        // Toggle selection for service centers
+        // Toggle selection for service centers (max 8)
         function toggleSelection(element, value) {
-            element.classList.toggle('selected');
             if (selectedCenters.has(value)) {
+                // Deselecting - always allowed
+                element.classList.remove('selected');
                 selectedCenters.delete(value);
             } else {
+                // Selecting - check maximum limit
+                if (selectedCenters.size >= 8) {
+                    alert('Maximum 8 locations selected. Please deselect some locations first.');
+                    return;
+                }
+                element.classList.add('selected');
                 selectedCenters.add(value);
             }
         }
@@ -1539,46 +1682,55 @@
 
         // Validate form
         function validateForm() {
-            const required = ['firstName', 'lastName', 'email', 'phone', 'zipCode', 'rmvUrl'];
-            for (const field of required) {
-                if (!document.getElementById(field).value.trim()) {
-                    const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase()
-                        .replace('rmv url', 'RMV URL')
-                        .replace('zipcode', 'ZIP Code');
-                    addLog(`Please fill in ${fieldName}`, 'error');
-                    return false;
-                }
-            }
-
-            // Validate ZIP code format
-            const zipCode = document.getElementById('zipCode').value;
-            if (!/^\d{5}$/.test(zipCode)) {
-                addLog('Please enter a valid 5-digit ZIP code', 'error');
+            // Check if personal data has been extracted (Section 1)
+            if (!extractedPersonalData) {
+                alert('⚠️ Please connect your RMV account first in Section 1');
+                addLog('Please connect your RMV account first in Section 1', 'error');
+                document.getElementById('section1').scrollIntoView({ behavior: 'smooth' });
                 return false;
             }
 
+            // Check required fields that still exist
+            const rmvUrl = document.getElementById('rmvUrl').value.trim();
+            const zipCode = document.getElementById('zipCode').value.trim();
+            
+            if (!rmvUrl) {
+                alert('⚠️ Please enter your RMV scheduling URL in Section 1');
+                addLog('Please fill in RMV URL', 'error');
+                document.getElementById('rmvUrl').focus();
+                return false;
+            }
+
+            if (!zipCode) {
+                alert('⚠️ Please enter your ZIP code in Section 1');
+                addLog('Please fill in ZIP Code', 'error');
+                document.getElementById('zipCode').focus();
+                return false;
+            }
+
+            // Validate ZIP code format
+            if (!/^\d{5}$/.test(zipCode)) {
+                alert('⚠️ Please enter a valid 5-digit ZIP code in Section 1');
+                addLog('Please enter a valid 5-digit ZIP code in Section 1', 'error');
+                document.getElementById('zipCode').focus();
+                return false;
+            }
+
+            // Check if service centers are selected (Section 2)
             if (selectedCenters.size === 0) {
+                alert('⚠️ Please select at least one RMV service center in Section 2');
                 addLog('Please select at least one service center from Section 2', 'error');
+                document.getElementById('section2').scrollIntoView({ behavior: 'smooth' });
                 return false;
             }
 
             // Validate URL format
-            const rmvUrl = document.getElementById('rmvUrl').value;
             if (!rmvUrl.includes('massdot.state.ma.us') && !rmvUrl.includes('cxmflow.com')) {
                 addLog('Please enter a valid RMV booking URL (should contain massdot.state.ma.us or cxmflow.com)', 'error');
                 return false;
             }
 
-            // Check link expiration date
-            const linkExpiration = document.getElementById('linkExpiration').value;
-            if (linkExpiration) {
-                const expDate = new Date(linkExpiration);
-                const today = new Date();
-                if (expDate <= today) {
-                    addLog('Link expiration date should be in the future', 'error');
-                    return false;
-                }
-            }
+            // Link expiration validation removed - no longer needed with automatic extraction
 
             return true;
         }
@@ -1588,10 +1740,20 @@
             if (!validateForm()) return;
 
             // Update UI
-            document.getElementById('monitorStatus').textContent = 'ACTIVE';
-            document.getElementById('monitorStatus').className = 'status-badge status-active';
-            document.querySelector('.btn-primary').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'inline-block';
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const monitorStatus = document.getElementById('monitorStatus');
+            
+            if (startBtn) startBtn.style.display = 'none';
+            if (stopBtn) stopBtn.style.display = 'inline-block';
+            if (monitorStatus) {
+                monitorStatus.textContent = 'ACTIVE';
+                monitorStatus.className = 'status-badge status-active';
+            }
+            
+            // Show appointments loading state
+            document.getElementById('appointmentsInactive').style.display = 'none';
+            document.getElementById('appointmentsLoading').style.display = 'block';
 
             const startTime = sliderValueToTime(document.getElementById('startTimeSlider').value);
             const endTime = sliderValueToTime(document.getElementById('endTimeSlider').value);
@@ -1624,11 +1786,20 @@
             }
 
             // Update UI
-            document.getElementById('monitorStatus').textContent = 'INACTIVE';
-            document.getElementById('monitorStatus').className = 'status-badge status-inactive';
-            document.querySelector('.btn-primary').style.display = 'inline-block';
-            document.getElementById('stopBtn').style.display = 'none';
-            document.getElementById('appointmentsSection').style.display = 'none';
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const monitorStatus = document.getElementById('monitorStatus');
+            
+            if (startBtn) startBtn.style.display = 'inline-block';
+            if (stopBtn) stopBtn.style.display = 'none';
+            if (monitorStatus) {
+                monitorStatus.textContent = 'INACTIVE';
+                monitorStatus.className = 'status-badge status-inactive';
+            }
+            
+            // Show appointments inactive state
+            document.getElementById('appointmentsLoading').style.display = 'none';
+            document.getElementById('appointmentsInactive').style.display = 'block';
 
             addLog('Monitoring stopped', 'info');
         }
@@ -1691,7 +1862,7 @@
                     body: JSON.stringify({
                         rmvUrl: rmvUrl,
                         selectedCenters: selectedCentersList,
-                        userPreferences: {
+                        preferences: {
                             startDate: document.getElementById('startDate').value,
                             endDate: document.getElementById('endDate').value,
                             startTime: sliderValueToTime(document.getElementById('startTimeSlider').value),
@@ -1754,12 +1925,12 @@
 
             // Log notification sending (actual implementation would send real notifications)
             if (emailEnabled) {
-                addLog(`Email notification sent to ${document.getElementById('email').value}`, 'success');
+                addLog(`Email notification sent to ${extractedPersonalData?.email || 'user'}`, 'success');
                 stats.notifications++;
             }
 
             if (smsEnabled) {
-                addLog(`SMS notification sent to ${document.getElementById('phone').value}`, 'success');
+                addLog(`SMS notification sent to ${extractedPersonalData?.phone || 'user'}`, 'success');
                 stats.notifications++;
             }
 
@@ -1906,7 +2077,28 @@
         }
 
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', initializeUI);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            initializeUI();
+            
+            // Additional fallback for connect button
+            setTimeout(() => {
+                const connectBtn = document.getElementById('connectRMV');
+                const zipField = document.getElementById('zipCode');
+                console.log('Fallback check - Connect button:', connectBtn);
+                console.log('Fallback check - ZIP field:', zipField);
+                
+                if (connectBtn && !connectBtn.onclick) {
+                    console.log('Adding fallback connect event listener');
+                    connectBtn.onclick = connectToRMV;
+                }
+                
+                if (zipField) {
+                    console.log('Adding fallback ZIP event listener');
+                    zipField.oninput = handleZipCodeInput;
+                }
+            }, 100);
+        });
 
         // Handle page visibility change to adjust monitoring frequency
         document.addEventListener('visibilitychange', () => {

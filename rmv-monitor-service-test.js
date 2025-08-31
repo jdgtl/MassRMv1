@@ -66,30 +66,12 @@ app.get('/demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'interactive.html'));
 });
 
-// Mock appointment check (legacy endpoint)
+// Legacy appointment check endpoint (removed mock implementation)
 app.post('/api/check-appointments', (req, res) => {
-    // Simulate finding appointments
-    const mockAppointments = [
-        {
-            center: 'Boston',
-            date: '2025-09-15',
-            time: '10:00 AM',
-            url: 'https://atlas-myrmv.massdot.state.ma.us/myrmv'
-        },
-        {
-            center: 'Cambridge',
-            date: '2025-09-16',
-            time: '2:30 PM',
-            url: 'https://atlas-myrmv.massdot.state.ma.us/myrmv'
-        }
-    ];
-
-    logger.info('Mock appointment check requested');
-    
-    res.json({
-        success: true,
-        found: Math.random() > 0.5, // 50% chance of finding appointments
-        appointments: Math.random() > 0.5 ? mockAppointments : [],
+    logger.info('Legacy endpoint called - redirecting to /api/scrape-rmv-appointments');
+    res.status(410).json({
+        success: false,
+        error: 'This endpoint has been deprecated. Use /api/scrape-rmv-appointments instead.',
         timestamp: new Date().toISOString()
     });
 });
@@ -348,58 +330,90 @@ async function scrapeRMVAppointments(rmvUrl, selectedCenters, userPreferences) {
                     });
                 });
                 
-                // Look for RMV office buttons with data-id attributes (preferred method)
-                const officeButtons = document.querySelectorAll('button[data-id]');
-                if (officeButtons.length > 0) {
-                    officeButtons.forEach(btn => {
+                // PRECISE RMV LOCATION DETECTION: Based on actual landing page HTML structure
+                
+                // Primary method: RMV QflowObjectItem buttons (from actual locations-page.html)
+                const qflowButtons = document.querySelectorAll('.QflowObjectItem[data-id]');
+                if (qflowButtons.length > 0) {
+                    console.log(`Found ${qflowButtons.length} QflowObjectItem location buttons`);
+                    qflowButtons.forEach(btn => {
                         const officeName = btn.textContent.split('\n')[0].trim(); // First line is office name
                         const dataId = btn.getAttribute('data-id');
                         const fullText = btn.textContent.trim();
+                        const subtitle = btn.querySelector('.subtitle')?.textContent?.trim() || '';
                         
                         if (officeName && dataId) {
-                            data.offices.push(fullText);
+                            data.offices.push({
+                                name: officeName,
+                                fullText: fullText,
+                                subtitle: subtitle,
+                                dataId: dataId,
+                                selector: '.QflowObjectItem[data-id]'
+                            });
                             data.officeDataIds.set(officeName, dataId);
                         }
                     });
                 } else {
-                    // Fallback: Enhanced office selection - look for broader patterns
-                    const officeSelectors = [
-                        'select option',
-                        'input[type="radio"]',
-                        'button',
-                        'div[class*="office"]',
-                        'div[class*="location"]',
-                        'li',
-                        'span[class*="center"]',
-                        'span[class*="office"]'
+                    // Fallback 1: Check for specific RMV container IDs (from actual HTML structure)
+                    const rmvContainerSelectors = [
+                        '#f61577d6-d75d-41c5-a6ab-f7a261ba5cfb .QflowObjectItem',  // First office selection step
+                        '#539af26b-8d29-4bcc-9d48-a68591c638ce .QflowObjectItem',  // Alternative office selection step
+                        '.ListView .QflowObjectItem'  // ListView container
                     ];
                     
-                    officeSelectors.forEach(selector => {
-                        const elements = document.querySelectorAll(selector);
-                        elements.forEach(el => {
-                            let text = el.textContent || el.value || el.getAttribute('data-office') || el.getAttribute('data-location') || '';
-                            
-                            // Check if text contains common RMV office names
-                            const rmvOfficePatterns = [
-                                /danvers/i, /salem/i, /lynn/i, /peabody/i, /revere/i, 
-                                /boston/i, /cambridge/i, /brockton/i, /lowell/i,
-                                /worcester/i, /springfield/i, /service center/i
-                            ];
-                            
-                            if (text.trim() && rmvOfficePatterns.some(pattern => pattern.test(text))) {
-                                data.offices.push(text.trim());
+                    let foundInContainer = false;
+                    rmvContainerSelectors.forEach(containerSelector => {
+                        if (!foundInContainer) {
+                            const containerButtons = document.querySelectorAll(containerSelector);
+                            if (containerButtons.length > 0) {
+                                console.log(`Found ${containerButtons.length} locations in container: ${containerSelector}`);
+                                foundInContainer = true;
+                                
+                                containerButtons.forEach(btn => {
+                                    const officeName = btn.textContent.split('\n')[0].trim();
+                                    const dataId = btn.getAttribute('data-id');
+                                    const fullText = btn.textContent.trim();
+                                    const subtitle = btn.querySelector('.subtitle')?.textContent?.trim() || '';
+                                    
+                                    if (officeName && dataId) {
+                                        data.offices.push({
+                                            name: officeName,
+                                            fullText: fullText,
+                                            subtitle: subtitle,
+                                            dataId: dataId,
+                                            selector: containerSelector
+                                        });
+                                        data.officeDataIds.set(officeName, dataId);
+                                    }
+                                });
                             }
-                            
-                            // Also capture general office-looking text
-                            if (text.trim() && text.length > 3 && text.length < 100 && 
-                                !text.match(/select|choose|pick|step|page|home|skip|main/i)) {
-                                const locationWords = ['center', 'office', 'service', 'rmv', 'registry'];
-                                if (locationWords.some(word => text.toLowerCase().includes(word))) {
-                                    data.offices.push(text.trim());
-                                }
-                            }
-                        });
+                        }
                     });
+                    
+                    // Fallback 2: Generic button[data-id] search if containers not found
+                    if (!foundInContainer) {
+                        const genericButtons = document.querySelectorAll('button[data-id]');
+                        if (genericButtons.length > 0) {
+                            console.log(`Found ${genericButtons.length} generic buttons with data-id`);
+                            genericButtons.forEach(btn => {
+                                const officeName = btn.textContent.split('\n')[0].trim();
+                                const dataId = btn.getAttribute('data-id');
+                                const fullText = btn.textContent.trim();
+                                
+                                // Only include if text looks like a location
+                                if (officeName && dataId && officeName.length > 2 && officeName.length < 50) {
+                                    data.offices.push({
+                                        name: officeName,
+                                        fullText: fullText,
+                                        subtitle: '',
+                                        dataId: dataId,
+                                        selector: 'button[data-id]'
+                                    });
+                                    data.officeDataIds.set(officeName, dataId);
+                                }
+                            });
+                        }
+                    }
                 }
                 
                 // Look for appointment time slots
@@ -649,15 +663,8 @@ async function scrapeRMVAppointments(rmvUrl, selectedCenters, userPreferences) {
                 if (hasNoAppointments) {
                     logger.info('Page indicates no appointments are available');
                 } else {
-                    // If we can't find structured appointment data, create a generic entry
-                    appointments.push({
-                        center: 'RMV Location',
-                        date: new Date().toLocaleDateString(),
-                        time: 'Check website',
-                        url: rmvUrl,
-                        raw: 'Page loaded successfully but appointment structure not recognized',
-                        type: 'fallback'
-                    });
+                    // No fallback entries - only return real appointments
+                    logger.info('No appointment structure recognized, returning empty results');
                 }
             } catch (contentError) {
                 logger.error('Error reading page content:', contentError.message);

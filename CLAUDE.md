@@ -5,6 +5,7 @@
 **Last Updated**: August 31, 2025  
 **Server Status**: Running on `http://localhost:3000`  
 **Monitoring**: Active appointment checking every 5 minutes during business hours
+**Performance**: Fast scraping (5-8 seconds) with enhanced UI/UX
 
 ## ✅ Completed Features
 
@@ -32,9 +33,11 @@
 - **Proper Controls**: Fixed Start/Stop button visibility
 
 ### 📅 Section 5: Live Appointments
-- **Real-time Display**: Shows available appointments as found
+- **Real-time Display**: Shows available appointments as found (5-8 second load time)
 - **Preference Matching**: Highlights appointments matching time preferences
 - **Multi-location Support**: Handles appointments from multiple service centers
+- **Enhanced UI**: Responsive grid (2/3/4 columns), clickable cards, chronological sorting
+- **Smart Display**: Distance-based priority, collapsible sections, hover effects
 
 ### 📊 Section 6: Statistics Dashboard
 - **Live Metrics**: Checks performed, appointments found, notifications sent
@@ -50,42 +53,54 @@
 ### Backend APIs:
 - **`/api/extract-personal-data`** - Fast 9.3s personal info extraction
 - **`/api/scrape-rmv-appointments`** - Multi-center appointment checking
+- **`/api/clear-sessions`** - Smart session management
+- **Fast Scraping Engine** - 5-8s appointment discovery vs 19s+ legacy
 - **Robust Error Handling** - Comprehensive try/catch with logging
 
 ### Key Methods:
-- **`checkRMVUrl()`** - 3-step navigation appointment scraping
+- **`fastAppointmentsScraping()`** - Optimized 5-8s appointment discovery 
+- **`checkRMVUrl()`** - Legacy 3-step navigation (fallback)
 - **`extractPersonalData()`** - Puppeteer-based data extraction
 - **`validateForm()`** - Complete input validation
-- **`displayAppointments()`** - Results rendering with preferences
+- **`displayAppointments()`** - Enhanced results rendering with date grouping
 
 ### Performance Optimizations:
+- **Fast Scraping Engine** - 5-8s vs 19s+ with disabled CSS/images
+- **Aggressive Timeouts** - 6s navigation vs 15s+ conservative waits  
+- **Smart Session Management** - Auto-clear old sessions to prevent conflicts
 - **Dynamic Wait Times** - Responds to DOM changes vs fixed timeouts
-- **Intelligent Section Expansion** - Only expands sections with available appointments
+- **Intelligent UI Loading** - Spinner timing matches actual processing
 - **Parallel Processing** - Handles multiple locations simultaneously
 - **Smart Intervals** - 5 minutes during business hours, 30 minutes off-hours
 
-## 🚨 Recent Fixes Applied
+## 🚨 Latest Major Updates (August 31, 2025)
 
-### Parameter Mismatch Resolution:
+### 🚀 Performance Revolution:
 ```javascript
-// FIXED: Frontend → Backend parameter alignment
-// OLD: userPreferences: { ... }
-// NEW: preferences: { ... }
+// NEW: Fast appointments scraping
+// OLD: 19+ seconds with full CSS/images loading
+// NEW: 5-8 seconds with optimized loading
+fastAppointmentsScraping() - Disabled CSS/images, 6s timeouts
 ```
 
-### Missing Method Recovery:
+### 🎨 Enhanced UI/UX:
 ```javascript
-// RESTORED: checkRMVUrl method from git backup
-// Location: rmv-monitor-service.js line 74
-// Status: Complete with 3-step navigation logic
+// NEW: Responsive appointment grids
+// Mobile: 2 columns | Tablet: 3 columns | Desktop: 4 columns
+// Clickable cards (no button) + hover effects + chronological sorting
 ```
 
-### UI State Management:
+### 🔧 Smart Session Management:
 ```javascript
-// FIXED: Proper element targeting
-// OLD: document.querySelector('.btn-primary')  // Too generic
-// NEW: document.getElementById('startBtn')     // Specific targeting
+// NEW: Auto-clear old sessions on page refresh/monitoring start  
+// FIXED: Loading spinner timing matches actual backend processing
+// ENHANCED: Polling schedule optimized for fast scraping (2s/4s/6s/8s)
 ```
+
+### Previous Fixes:
+- Parameter alignment (preferences vs userPreferences)
+- Method recovery (checkRMVUrl from git backup)  
+- UI state management (specific element targeting)
 
 ## 🔄 System Architecture
 
@@ -149,11 +164,11 @@ Results Display + Notifications
 
 ## 🔄 Git Commit History
 
-**Latest Commit**: `0068edf` - "Fix RMV monitoring system integration and UI improvements"
-- Fixed parameter mismatch and monitoring integration
-- Added status badges and improved button visibility
-- Updated Section 1 layout and city lookup functionality
-- Restored checkRMVUrl method and validated complete system
+**Latest Commit**: `f3001dc` - "Major performance and UI improvements: fast scraping + enhanced UX"
+- Implemented fast appointments scraping (5-8s vs 19s+)
+- Enhanced responsive UI with clickable cards and smart layouts
+- Added smart session management and optimized polling
+- Comprehensive performance and UX improvements across the system
 
 ## 🚀 Next Steps
 

@@ -130,6 +130,7 @@ const service = {
                 });
                 
                 logger.info(`Found ${rmvData.offices.length} offices available`);
+                logger.info('🏢 All available offices:', rmvData.offices.map(o => o.name));
                 
                 // STEP 2: Filter and navigate through selected locations  
                 const selectedCenters = userPreferences?.locations || userPreferences?.centers || [];
@@ -637,6 +638,141 @@ app.post('/api/extract-user-data', async (req, res) => {
     }
 });
 
+// Fast appointments scraping function
+async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
+    const startTime = Date.now();
+    logger.info('🚀 Starting FAST appointments scraping...');
+    logger.info(`📍 URL: ${rmvUrl?.substring(0, 50)}...`);
+    logger.info(`📋 Selected centers: ${selectedCenters?.join(', ')}`);
+
+    const page = await browser.newPage();
+    const appointments = [];
+
+    try {
+        // Optimized page settings for speed
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+        await page.setViewport({ width: 1280, height: 720 });
+        
+        // Disable images and CSS for faster loading
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            if (req.resourceType() === 'stylesheet' || req.resourceType() === 'image') {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
+        // STEP 1: Navigate to RMV page with aggressive timeout
+        logger.info('🌐 Loading RMV page with fast settings...');
+        await page.goto(rmvUrl, { 
+            waitUntil: 'domcontentloaded', 
+            timeout: 10000 
+        });
+        
+        // Quick wait for dynamic content
+        await page.waitForTimeout(1500);
+
+        // STEP 2: Extract offices quickly
+        const offices = await page.evaluate(() => {
+            const officeList = [];
+            const buttons = document.querySelectorAll('.QflowObjectItem[data-id]');
+            buttons.forEach(btn => {
+                const name = btn.textContent.split('\n')[0].trim();
+                const dataId = btn.getAttribute('data-id');
+                if (name && dataId) {
+                    officeList.push({ name, dataId });
+                }
+            });
+            return officeList;
+        });
+
+        logger.info(`⚡ Found ${offices.length} offices in ${Date.now() - startTime}ms`);
+
+        // STEP 3: Filter matching offices
+        const matchedOffices = offices.filter(office => 
+            selectedCenters.some(selected => 
+                office.name.toLowerCase().includes(selected.toLowerCase()) ||
+                selected.toLowerCase().includes(office.name.toLowerCase())
+            )
+        );
+
+        if (matchedOffices.length === 0 && offices.length > 0) {
+            matchedOffices.push(...offices.slice(0, 2)); // Limit to 2 for speed
+        }
+
+        logger.info(`🎯 Processing ${matchedOffices.length} matched offices: ${matchedOffices.map(o => o.name).join(', ')}`);
+
+        // STEP 4: Process offices sequentially but with fast timeouts
+        for (const office of matchedOffices) {
+            try {
+                logger.info(`🏢 Processing ${office.name}...`);
+                
+                // Quick click
+                await page.click(`.QflowObjectItem[data-id="${office.dataId}"]`);
+                
+                // Fast wait for navigation
+                await Promise.race([
+                    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 6000 }),
+                    page.waitForSelector('.ServiceAppointmentDateTime[data-datetime]', { timeout: 6000 }),
+                    new Promise(resolve => setTimeout(resolve, 3000))
+                ]);
+
+                // Quick appointment extraction
+                const officeAppointments = await page.evaluate((officeName, rmvUrl, officeDataId) => {
+                    const slots = [];
+                    const elements = document.querySelectorAll('.ServiceAppointmentDateTime[data-datetime]');
+                    
+                    elements.forEach(el => {
+                        const dateTime = el.getAttribute('data-datetime');
+                        const displayTime = el.textContent.trim();
+                        const isAvailable = !el.classList.contains('disabled') && 
+                                          !el.classList.contains('unavailable') &&
+                                          el.classList.contains('valid');
+                        
+                        if (dateTime && displayTime && isAvailable) {
+                            const dt = new Date(dateTime);
+                            slots.push({
+                                center: officeName,
+                                date: dt.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
+                                time: displayTime,
+                                url: rmvUrl,
+                                raw: displayTime,
+                                type: 'fast-scraping',
+                                datetime: dt.toLocaleString('en-US'),
+                                officeName: officeName,
+                                officeId: officeDataId
+                            });
+                        }
+                    });
+                    
+                    return slots;
+                }, office.name, rmvUrl, office.dataId);
+
+                appointments.push(...officeAppointments);
+                logger.info(`✅ Found ${officeAppointments.length} appointments for ${office.name}`);
+
+                // Quick navigation back to office list (except for last office)
+                if (office !== matchedOffices[matchedOffices.length - 1]) {
+                    await page.goBack({ waitUntil: 'domcontentloaded', timeout: 4000 });
+                    await page.waitForTimeout(300);
+                }
+
+            } catch (error) {
+                logger.warn(`⚠️ Error processing ${office.name}: ${error.message}`);
+            }
+        }
+
+        const duration = Date.now() - startTime;
+        logger.info(`🏁 FAST scraping completed: ${appointments.length} appointments in ${duration}ms`);
+
+        return appointments;
+
+    } finally {
+        await page.close();
+    }
+}
+
 // Fast personal data extraction endpoint
 app.post('/api/extract-personal-data', async (req, res) => {
     const startTime = Date.now();
@@ -997,6 +1133,22 @@ app.post('/api/start-monitoring', async (req, res) => {
         // Generate session ID
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
+        // Clear all existing sessions before starting new monitoring
+        const oldSessionCount = activeMonitoringSessions.size;
+        activeMonitoringSessions.clear();
+        if (oldSessionCount > 0) {
+            logger.info(`🧹 Cleared ${oldSessionCount} old monitoring sessions before starting new session ${sessionId}`);
+        }
+        
+        // Debug: Log what we received from frontend
+        logger.info(`🔍 Debug: Received data for ${sessionId}:`, {
+            rmvUrl: rmvUrl?.substring(0, 50) + '...',
+            selectedCenters: selectedCenters,
+            preferences: preferences,
+            selectedCentersLength: selectedCenters?.length,
+            selectedCentersType: typeof selectedCenters
+        });
+
         // Store monitoring session
         activeMonitoringSessions.set(sessionId, {
             rmvUrl,
@@ -1008,7 +1160,20 @@ app.post('/api/start-monitoring', async (req, res) => {
             appointmentsFound: []
         });
 
-        logger.info(`🟢 Started monitoring session ${sessionId} for ${selectedCenters.length} locations`);
+        logger.info(`🟢 Started monitoring session ${sessionId} for ${selectedCenters?.length || 0} locations`);
+        
+        // Trigger immediate appointment check for this new session
+        logger.info(`⚡ Running immediate check for new session ${sessionId}`);
+        setTimeout(async () => {
+            try {
+                const session = activeMonitoringSessions.get(sessionId);
+                if (session) {
+                    await processMonitoringSession(sessionId, session);
+                }
+            } catch (error) {
+                logger.error(`Error in immediate check for ${sessionId}:`, error.message);
+            }
+        }, 2000); // Give 2 seconds for response to complete
         
         res.json({
             success: true,
@@ -1057,6 +1222,18 @@ app.post('/api/stop-monitoring', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// Clear all monitoring sessions (for testing)
+app.post('/api/clear-sessions', (req, res) => {
+    const clearedCount = activeMonitoringSessions.size;
+    activeMonitoringSessions.clear();
+    logger.info(`🧹 Manually cleared ${clearedCount} monitoring sessions`);
+    
+    res.json({
+        success: true,
+        message: `Cleared ${clearedCount} monitoring sessions`
+    });
 });
 
 // Get monitoring status
@@ -1115,40 +1292,42 @@ async function runMonitoringCycle() {
     }
 
     for (const [sessionId, session] of activeMonitoringSessions) {
-        try {
-            logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
-            
-            // Use the existing checkRMVUrl method
-            const appointments = await service.scraper.checkRMVUrl(session.rmvUrl, {
-                locations: session.selectedCenters,
-                ...session.preferences
-            });
-            
-            // Debug: Log the actual results structure
-            logger.info(`🔍 Results for ${sessionId}:`, {
-                appointmentsFound: appointments?.length || 0,
-                isArray: Array.isArray(appointments),
-                sampleAppointment: appointments?.[0]
-            });
-            
-            if (Array.isArray(appointments) && appointments.length > 0) {
-                logger.info(`✅ Found ${appointments.length} appointments for session ${sessionId}`);
-                
-                // Store results in session
-                session.appointmentsFound = appointments;
-                session.lastChecked = new Date().toISOString();
-                
-                // Here you could trigger notifications
-                // await sendNotifications(session, appointments);
-            } else {
-                logger.info(`📅 No appointments found for session ${sessionId}`);
-                session.lastChecked = new Date().toISOString();
-            }
+        await processMonitoringSession(sessionId, session);
+    }
+}
 
-        } catch (error) {
-            logger.error(`❌ Error processing session ${sessionId}:`, error.message);
+// Process individual monitoring session
+async function processMonitoringSession(sessionId, session) {
+    try {
+        logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
+        
+        // Use FAST appointments scraping instead of slow 3-step navigation
+        const appointments = await fastAppointmentsScraping(session.rmvUrl, session.selectedCenters);
+        
+        // Debug: Log the actual results structure
+        logger.info(`🔍 Results for ${sessionId}:`, {
+            appointmentsFound: appointments?.length || 0,
+            isArray: Array.isArray(appointments),
+            sampleAppointment: appointments?.[0]
+        });
+        
+        if (Array.isArray(appointments) && appointments.length > 0) {
+            logger.info(`✅ Found ${appointments.length} appointments for session ${sessionId}`);
+            
+            // Store results in session
+            session.appointmentsFound = appointments;
+            session.lastChecked = new Date().toISOString();
+            
+            // Here you could trigger notifications
+            // await sendNotifications(session, appointments);
+        } else {
+            logger.info(`📅 No appointments found for session ${sessionId}`);
             session.lastChecked = new Date().toISOString();
         }
+
+    } catch (error) {
+        logger.error(`❌ Error processing session ${sessionId}:`, error.message);
+        session.lastChecked = new Date().toISOString();
     }
 }
 

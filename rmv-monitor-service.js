@@ -1066,7 +1066,8 @@ app.get('/api/monitoring-status', (req, res) => {
         locationsCount: session.selectedCenters.length,
         startedAt: session.startedAt,
         lastChecked: session.lastChecked,
-        appointmentsFound: session.appointmentsFound.length
+        appointmentsFound: Array.isArray(session.appointmentsFound) ? session.appointmentsFound.length : 0,
+        appointments: session.appointmentsFound || []
     }));
 
     res.json({
@@ -1077,34 +1078,68 @@ app.get('/api/monitoring-status', (req, res) => {
     });
 });
 
+// Manual trigger for monitoring cycle (for testing)
+app.post('/api/trigger-monitoring-cycle', async (req, res) => {
+    try {
+        logger.info('🔄 Manual monitoring cycle triggered');
+        await runMonitoringCycle();
+        
+        res.json({
+            success: true,
+            message: 'Monitoring cycle completed',
+            activeSessions: activeMonitoringSessions.size
+        });
+    } catch (error) {
+        logger.error('❌ Manual monitoring cycle failed:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Main monitoring loop
 async function runMonitoringCycle() {
+    logger.info(`🔄 Monitoring cycle starting - found ${activeMonitoringSessions.size} active sessions`);
+    
     if (activeMonitoringSessions.size === 0) {
         logger.info(`Checking for ${activeMonitoringSessions.size} active users`);
         return;
     }
 
-    logger.info(`🔍 Checking appointments for ${activeMonitoringSessions.size} active sessions...`);
+    logger.info(`🔍 Processing ${activeMonitoringSessions.size} active monitoring sessions...`);
+    
+    // Debug: List all active sessions
+    for (const [sessionId, session] of activeMonitoringSessions) {
+        logger.info(`📋 Session ${sessionId}: ${session.selectedCenters.length} locations, started ${session.startedAt}`);
+    }
 
     for (const [sessionId, session] of activeMonitoringSessions) {
         try {
             logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
             
             // Use the existing checkRMVUrl method
-            const results = await service.scraper.checkRMVUrl(session.rmvUrl, {
+            const appointments = await service.scraper.checkRMVUrl(session.rmvUrl, {
                 locations: session.selectedCenters,
                 ...session.preferences
             });
             
-            if (results.success && results.totalAppointments > 0) {
-                logger.info(`✅ Found ${results.totalAppointments} appointments for session ${sessionId}`);
+            // Debug: Log the actual results structure
+            logger.info(`🔍 Results for ${sessionId}:`, {
+                appointmentsFound: appointments?.length || 0,
+                isArray: Array.isArray(appointments),
+                sampleAppointment: appointments?.[0]
+            });
+            
+            if (Array.isArray(appointments) && appointments.length > 0) {
+                logger.info(`✅ Found ${appointments.length} appointments for session ${sessionId}`);
                 
                 // Store results in session
-                session.appointmentsFound = results.appointments;
+                session.appointmentsFound = appointments;
                 session.lastChecked = new Date().toISOString();
                 
                 // Here you could trigger notifications
-                // await sendNotifications(session, results);
+                // await sendNotifications(session, appointments);
             } else {
                 logger.info(`📅 No appointments found for session ${sessionId}`);
                 session.lastChecked = new Date().toISOString();

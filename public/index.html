@@ -1795,10 +1795,13 @@
                     addLog('Backend will check every 5 minutes automatically', 'info');
 
                     // Show appointments section
-                    document.getElementById('appointmentsSection').style.display = 'block';
+                    document.getElementById('section5').style.display = 'block';
                     
                     // Start polling for results from backend every 30 seconds
                     startResultsPolling();
+                    
+                    // Do an immediate poll to check for existing results
+                    setTimeout(pollForResults, 2000);
                     
                 } else {
                     throw new Error(result.error || 'Failed to start monitoring');
@@ -1881,36 +1884,48 @@
             document.getElementById('appointmentsInactive').style.display = 'block';
         }
 
-        // Poll backend for monitoring results
+        // Poll backend for monitoring results (one-time)
+        async function pollForResults() {
+            try {
+                const response = await fetch('/api/monitoring-status');
+                const status = await response.json();
+                
+                if (status.success && status.sessions.length > 0) {
+                    const mySession = status.sessions.find(s => s.sessionId === currentMonitoringSessionId);
+                    
+                    if (mySession && mySession.appointmentsFound > 0) {
+                        addLog(`Backend found ${mySession.appointmentsFound} appointments!`, 'success');
+                        
+                        // Display the appointments from backend
+                        if (mySession.appointments && mySession.appointments.length > 0) {
+                            displayAppointments(mySession.appointments);
+                            stats.available = mySession.appointmentsFound;
+                            updateStats();
+                            
+                            // Hide loading state and show results
+                            document.getElementById('appointmentsLoading').style.display = 'none';
+                            document.getElementById('appointmentsList').style.display = 'block';
+                        }
+                    } else if (mySession && mySession.appointmentsFound === 0) {
+                        // No appointments found
+                        displayNoAppointments();
+                    }
+                    
+                    // Update last checked time
+                    if (mySession && mySession.lastChecked) {
+                        const lastChecked = new Date(mySession.lastChecked);
+                        addLog(`Last checked: ${lastChecked.toLocaleTimeString()}`, 'info');
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling monitoring status:', error);
+            }
+        }
+
+        // Poll backend for monitoring results (continuous)
         function startResultsPolling() {
             // Check for results every 30 seconds
-            resultsPollingInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/monitoring-status');
-                    const status = await response.json();
-                    
-                    if (status.success && status.sessions.length > 0) {
-                        const mySession = status.sessions.find(s => s.sessionId === currentMonitoringSessionId);
-                        
-                        if (mySession && mySession.appointmentsFound > 0) {
-                            addLog(`Backend found ${mySession.appointmentsFound} appointments!`, 'success');
-                            
-                            // You could fetch detailed appointment data here
-                            // For now, just update stats
-                            stats.available += mySession.appointmentsFound;
-                            updateStats();
-                        }
-                        
-                        // Update last checked time
-                        if (mySession && mySession.lastChecked) {
-                            const lastChecked = new Date(mySession.lastChecked);
-                            addLog(`Last checked: ${lastChecked.toLocaleTimeString()}`, 'info');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error polling monitoring status:', error);
-                }
-            }, 30000); // 30 seconds
+            resultsPollingInterval = setInterval(pollForResults, 30000);
         }
 
         // Get check interval based on current time

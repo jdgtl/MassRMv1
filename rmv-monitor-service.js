@@ -62,7 +62,24 @@ const service = {
             try {
                 this.browser = await puppeteer.launch({
                     headless: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox']
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-blink-features=AutomationControlled',
+                        '--disable-features=VizDisplayCompositor',
+                        '--disable-background-networking',
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding',
+                        '--disable-field-trial-config',
+                        '--disable-ipc-flooding-protection',
+                        '--no-default-browser-check',
+                        '--no-first-run',
+                        '--disable-default-apps'
+                    ],
+                    ignoreDefaultArgs: ['--enable-automation'],
+                    defaultViewport: null
                 });
                 logger.info('Puppeteer browser initialized');
                 return true;
@@ -645,18 +662,45 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
     logger.info(`📍 URL: ${rmvUrl?.substring(0, 50)}...`);
     logger.info(`📋 Selected centers: ${selectedCenters?.join(', ')}`);
 
-    const page = await browser.newPage();
+    if (!service.scraper.browser) {
+        throw new Error('Browser not initialized');
+    }
+    const page = await service.scraper.browser.newPage();
     const appointments = [];
 
     try {
-        // Optimized page settings for speed
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-        await page.setViewport({ width: 1280, height: 720 });
+        // Enhanced anti-detection measures
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await page.setViewport({ width: 1366, height: 768 });
         
-        // Disable images and CSS for faster loading
+        // Set realistic browser properties to avoid detection
+        await page.evaluateOnNewDocument(() => {
+            // Override the navigator.webdriver property
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => false,
+            });
+            
+            // Mock realistic screen properties
+            Object.defineProperty(screen, 'width', { get: () => 1920 });
+            Object.defineProperty(screen, 'height', { get: () => 1080 });
+            Object.defineProperty(screen, 'availWidth', { get: () => 1920 });
+            Object.defineProperty(screen, 'availHeight', { get: () => 1040 });
+            
+            // Add some realistic plugins
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [
+                    { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+                    { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' }
+                ],
+            });
+        });
+        
+        // More selective resource blocking to avoid detection
         await page.setRequestInterception(true);
         page.on('request', (req) => {
-            if (req.resourceType() === 'stylesheet' || req.resourceType() === 'image') {
+            const resourceType = req.resourceType();
+            // Only block heavy resources, keep CSS for proper rendering
+            if (resourceType === 'image' || resourceType === 'media' || resourceType === 'font') {
                 req.abort();
             } else {
                 req.continue();
@@ -703,54 +747,155 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
 
         logger.info(`🎯 Processing ${matchedOffices.length} matched offices: ${matchedOffices.map(o => o.name).join(', ')}`);
 
-        // STEP 4: Process offices sequentially but with fast timeouts
+        // STEP 4: Process offices with enhanced reliability and anti-detection
         for (const office of matchedOffices) {
             try {
                 logger.info(`🏢 Processing ${office.name}...`);
                 
-                // Quick click
-                await page.click(`.QflowObjectItem[data-id="${office.dataId}"]`);
+                // Human-like mouse movement and click
+                const element = await page.$(`.QflowObjectItem[data-id="${office.dataId}"]`);
+                if (!element) {
+                    logger.warn(`⚠️ Office element not found: ${office.name}`);
+                    continue;
+                }
                 
-                // Fast wait for navigation
-                await Promise.race([
-                    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 6000 }),
-                    page.waitForSelector('.ServiceAppointmentDateTime[data-datetime]', { timeout: 6000 }),
-                    new Promise(resolve => setTimeout(resolve, 3000))
-                ]);
+                // Scroll element into view naturally
+                await element.scrollIntoView();
+                await page.waitForTimeout(300 + Math.random() * 200); // Random delay 300-500ms
+                
+                // Get element bounds for realistic click
+                const box = await element.boundingBox();
+                if (box) {
+                    // Click at center with slight randomness
+                    const x = box.x + box.width / 2 + (Math.random() - 0.5) * 10;
+                    const y = box.y + box.height / 2 + (Math.random() - 0.5) * 10;
+                    await page.mouse.click(x, y, { delay: 50 + Math.random() * 50 });
+                } else {
+                    // Fallback to regular click
+                    await element.click();
+                }
+                
+                logger.info(`✅ Clicked ${office.name}, waiting for page response...`);
+                
+                // More robust navigation waiting with multiple fallback strategies
+                let navigationSuccessful = false;
+                try {
+                    await Promise.race([
+                        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 8000 })
+                            .then(() => { navigationSuccessful = true; }),
+                        page.waitForSelector('.ServiceAppointmentDateTime[data-datetime], .appointment-slot', { timeout: 8000 })
+                            .then(() => { navigationSuccessful = true; }),
+                        new Promise((resolve, reject) => 
+                            setTimeout(() => reject(new Error('Timeout after 8 seconds')), 8000)
+                        )
+                    ]);
+                } catch (navError) {
+                    logger.warn(`⚠️ Navigation timeout for ${office.name}, trying to continue anyway...`);
+                    // Give it a bit more time
+                    await page.waitForTimeout(2000);
+                }
 
-                // Quick appointment extraction
+                // Hybrid appointment extraction (rmv1 + rmv2 selectors for better compatibility)
                 const officeAppointments = await page.evaluate((officeName, rmvUrl, officeDataId) => {
                     const slots = [];
-                    const elements = document.querySelectorAll('.ServiceAppointmentDateTime[data-datetime]');
+                    
+                    // Try rmv1's simpler selector first (.appointment-slot)
+                    let elements = document.querySelectorAll('.appointment-slot');
+                    let selectorUsed = 'rmv1-style';
+                    
+                    // Fallback to current rmv2 selector if rmv1 doesn't work
+                    if (elements.length === 0) {
+                        elements = document.querySelectorAll('.ServiceAppointmentDateTime[data-datetime]');
+                        selectorUsed = 'rmv2-style';
+                    }
+                    
+                    console.log(`Found ${elements.length} elements using ${selectorUsed} selector`);
+                    
+                    // Debug: Log details of first few elements
+                    if (elements.length > 0) {
+                        console.log('Sample element analysis:');
+                        for (let i = 0; i < Math.min(3, elements.length); i++) {
+                            const el = elements[i];
+                            console.log(`Element ${i+1}:`, {
+                                text: el.textContent?.trim().substring(0, 50),
+                                classes: el.className,
+                                hasDataDatetime: !!el.getAttribute('data-datetime'),
+                                dataDatetime: el.getAttribute('data-datetime')
+                            });
+                        }
+                    }
                     
                     elements.forEach(el => {
-                        const dateTime = el.getAttribute('data-datetime');
-                        const displayTime = el.textContent.trim();
-                        const isAvailable = !el.classList.contains('disabled') && 
-                                          !el.classList.contains('unavailable') &&
-                                          el.classList.contains('valid');
-                        
-                        if (dateTime && displayTime && isAvailable) {
-                            const dt = new Date(dateTime);
-                            slots.push({
-                                center: officeName,
-                                date: dt.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
-                                time: displayTime,
-                                url: rmvUrl,
-                                raw: displayTime,
-                                type: 'fast-scraping',
-                                datetime: dt.toLocaleString('en-US'),
-                                officeName: officeName,
-                                officeId: officeDataId
-                            });
+                        if (selectorUsed === 'rmv1-style') {
+                            // rmv1 approach - simpler extraction
+                            const displayTime = el.textContent.trim();
+                            const isAvailable = !el.classList.contains('disabled') && 
+                                              !el.classList.contains('unavailable');
+                            
+                            if (displayTime && isAvailable && displayTime.match(/\d+:\d+/)) {
+                                slots.push({
+                                    center: officeName,
+                                    date: new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
+                                    time: displayTime,
+                                    url: rmvUrl,
+                                    raw: displayTime,
+                                    type: 'rmv1-compatible',
+                                    datetime: displayTime,
+                                    officeName: officeName,
+                                    officeId: officeDataId
+                                });
+                            }
+                        } else {
+                            // rmv2 approach - current method with data-datetime
+                            const dateTime = el.getAttribute('data-datetime');
+                            const displayTime = el.textContent.trim();
+                            const isAvailable = !el.classList.contains('disabled') && 
+                                              !el.classList.contains('unavailable');
+                            
+                            if (dateTime && displayTime && isAvailable) {
+                                const dt = new Date(dateTime);
+                                slots.push({
+                                    center: officeName,
+                                    date: dt.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
+                                    time: displayTime,
+                                    url: rmvUrl,
+                                    raw: displayTime,
+                                    type: 'rmv2-compatible',
+                                    datetime: dt.toLocaleString('en-US'),
+                                    officeName: officeName,
+                                    officeId: officeDataId
+                                });
+                            }
                         }
                     });
                     
-                    return slots;
+                    // Return debugging info along with slots
+                    const debugInfo = elements.length > 0 ? {
+                        sampleElements: Array.from(elements).slice(0, 3).map((el, i) => ({
+                            index: i + 1,
+                            text: el.textContent?.trim().substring(0, 50),
+                            classes: el.className,
+                            hasDataDatetime: !!el.getAttribute('data-datetime'),
+                            dataDatetime: el.getAttribute('data-datetime'),
+                            hasDisabled: el.classList.contains('disabled'),
+                            hasUnavailable: el.classList.contains('unavailable'),
+                            hasValid: el.classList.contains('valid')
+                        }))
+                    } : null;
+                    
+                    return { slots, selectorUsed, elementsFound: elements.length, debugInfo };
                 }, office.name, rmvUrl, office.dataId);
 
-                appointments.push(...officeAppointments);
-                logger.info(`✅ Found ${officeAppointments.length} appointments for ${office.name}`);
+                appointments.push(...officeAppointments.slots);
+                logger.info(`✅ Found ${officeAppointments.slots.length} appointments for ${office.name} (using ${officeAppointments.selectorUsed}, ${officeAppointments.elementsFound} elements)`);
+                
+                // Debug logging for element analysis
+                if (officeAppointments.debugInfo && officeAppointments.elementsFound > 0 && officeAppointments.slots.length === 0) {
+                    logger.info(`🔍 Debug - Found elements but no appointments. Sample analysis:`);
+                    officeAppointments.debugInfo.sampleElements.forEach(el => {
+                        logger.info(`  Element ${el.index}: text="${el.text}", classes="${el.classes}", hasValid=${el.hasValid}, hasDisabled=${el.hasDisabled}, hasDataDatetime=${el.hasDataDatetime}`);
+                    });
+                }
 
                 // Quick navigation back to office list (except for last office)
                 if (office !== matchedOffices[matchedOffices.length - 1]) {
@@ -760,6 +905,31 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
 
             } catch (error) {
                 logger.warn(`⚠️ Error processing ${office.name}: ${error.message}`);
+                
+                // If page was closed/crashed, try to recover
+                if (error.message.includes('Target closed') || error.message.includes('Protocol error')) {
+                    logger.info(`🔄 Page crashed for ${office.name}, attempting recovery...`);
+                    try {
+                        // Check if page is still valid
+                        if (page.isClosed()) {
+                            logger.info(`🆕 Creating new page for recovery...`);
+                            await page.close().catch(() => {}); // Ignore errors
+                            page = await service.scraper.browser.newPage();
+                            
+                            // Reapply anti-detection measures
+                            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                            await page.setViewport({ width: 1366, height: 768 });
+                            
+                            // Re-navigate to main page
+                            await page.goto(rmvUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+                            await page.waitForTimeout(2000);
+                            logger.info(`🔄 Page recovered, but skipping ${office.name} for this cycle`);
+                        }
+                    } catch (recoveryError) {
+                        logger.error(`❌ Failed to recover page: ${recoveryError.message}`);
+                        break; // Exit the loop if we can't recover
+                    }
+                }
             }
         }
 
@@ -1329,7 +1499,8 @@ async function processMonitoringSession(sessionId, session) {
         }
 
     } catch (error) {
-        logger.error(`❌ Error processing session ${sessionId}:`, error.message);
+        logger.error(`❌ Error processing session ${sessionId}: ${error.message}`);
+        logger.error(`❌ Full error stack:`, error.stack);
         session.lastChecked = new Date().toISOString();
     }
 }

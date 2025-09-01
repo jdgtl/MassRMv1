@@ -124,6 +124,58 @@ app.post('/api/scrape-rmv-appointments', async (req, res) => {
     }
 });
 
+// Personal data extraction endpoint for clean UI
+app.post('/api/extract-personal-data', async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        const { url } = req.body;
+
+        if (!url) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'URL is required' 
+            });
+        }
+
+        if (!url.includes('rmvmassdotappt.cxmflow.com')) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Invalid RMV URL format' 
+            });
+        }
+
+        logger.info('Starting personal data extraction from:', url.substring(0, 50) + '...');
+
+        const MinimalRMVExtractor = require('./rmv-extractor-minimal');
+        const extractor = new MinimalRMVExtractor();
+        
+        const personalData = await extractor.extractPersonalData(url);
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+        logger.info('Personal data extraction completed:', {
+            duration: `${duration}s`,
+            foundFields: Object.keys(personalData).filter(key => personalData[key] && key !== 'extractionMethod')
+        });
+
+        res.json({
+            success: true,
+            personalData: personalData,
+            duration: duration
+        });
+
+    } catch (error) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        logger.error('Personal data extraction failed:', error.message);
+        
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            duration: duration
+        });
+    }
+});
+
 // Note: Advanced direct URL generation is now handled by the rmv-direct-url.js module
 // The old generateDirectAppointmentURL function has been replaced with enhanceScraperWithDirectUrls
 

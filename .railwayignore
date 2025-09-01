@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 
 # Logs
 logs/
@@ -15,37 +14,35 @@ error.log
 .DS_Store
 Thumbs.db
 
-# Documentation (reduce build size)
+# Documentation (not needed for deployment)
 README.md
 DEPLOY.md
 deployment_guide.md
 deploy-to-cloudflare.md
 
-# Test files (not needed in production)
+# Test files
 *.test.js
 test-*.js
 test-suite.js
 debug-*.js
 capture-network-requests.js
-rmv-test-fast/
-rmv-test-standalone/
 
 # Development files
 demo.sh
 railway-deploy.sh
-railway-deploy-optimized.sh
 
 # Instructions (development only)
 instructions/
 
-# Large HTML files (keep only essential)
-index-improved.html
+# Large HTML files not needed for core functionality
 landing-pages/
+public/interactive.html
 
 # Other deployment configs
 .vercel/
 vercel.json
 vercel-api.js
+cf_appv2/
 
 # IDE files
 .vscode/
@@ -54,11 +51,7 @@ vercel-api.js
 # Environment files
 .env
 .env.local
-.env.example
 
-# Git
-.git/
-.gitignore
-
-# Railway specific (keep project config)
-!.railway/
+# Backup files
+*.backup
+nixpacks.toml.backup

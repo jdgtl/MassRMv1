@@ -55,8 +55,12 @@ open http://localhost:3000
 - **Webhook**: Custom integrations with external systems
 
 ### 📊 Live Monitoring Dashboard
+- **Dual View System**: List view + full-width calendar view
+- **Calendar Integration**: Monthly calendar with green highlighting for preferred appointments
+- **Modal Popups**: Click calendar days to see appointment details  
+- **Smart Month Display**: Calendar starts with user's preferred month or first appointment month
 - **Real-time Status**: Visual indicators for all system components
-- **Performance Metrics**: Checks performed, success rates, response times
+- **Performance Metrics**: Fast 5-8 second appointment checking, success rates, response times
 - **Activity Logs**: Detailed system activity with color-coded entries
 
 ## 🏗️ Technical Architecture

@@ -3064,6 +3064,19 @@
         // Calendar View Global Variables
         let currentCalendarMonth = new Date();
         let calendarAppointments = [];
+        
+        // Calendar navigation functions
+        function previousMonth() {
+            currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() - 1);
+            generateCalendar();
+            console.log('📅 Calendar: Navigated to previous month:', currentCalendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+        }
+        
+        function nextMonth() {
+            currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + 1);
+            generateCalendar();
+            console.log('📅 Calendar: Navigated to next month:', currentCalendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+        }
 
         // Calendar View Functions
         function showCalendarView() {

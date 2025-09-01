@@ -4,8 +4,8 @@
   "description": "RMV Appointment Monitoring Service",
   "main": "rmv-monitor-service.js",
   "scripts": {
-    "start": "node rmv-monitor-service.js",
-    "dev": "nodemon rmv-monitor-service.js",
+    "start": "node rmv-monitor-service-test.js",
+    "dev": "nodemon rmv-monitor-service-test.js",
     "test": "jest",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop rmv-monitor",

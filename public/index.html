@@ -2215,6 +2215,8 @@
 
                     // Show appointments section
                     document.getElementById('section5').style.display = 'block';
+                    // Also show calendar view section
+                    document.getElementById('section5b').style.display = 'block';
                     
                     // Start countdown timer for next check
                     startCountdownTimer();
@@ -2675,6 +2677,10 @@
                     }
                 });
             }, 50); // Small delay to ensure DOM is fully rendered
+            
+            // Update calendar with new appointments
+            updateCalendarData(appointments);
+            showCalendarView();
         }
 
         // Create collapsible date section with preferred/other groups
@@ -2907,6 +2913,15 @@
 
         // Calendar View Functions
         function showCalendarView() {
+            // Set calendar to start from user's start date
+            const startDateInput = document.getElementById('startDate');
+            if (startDateInput && startDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                if (!isNaN(startDate.getTime())) {
+                    currentCalendarMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                }
+            }
+            
             document.getElementById('section5b').style.display = 'block';
             document.getElementById('calendarInactive').style.display = 'none';
             document.getElementById('calendarView').style.display = 'block';

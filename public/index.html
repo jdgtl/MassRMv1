@@ -1083,6 +1083,35 @@
             background: #f9fafb;
             border-radius: 8px;
         }
+        
+        /* View Toggle Buttons */
+        .view-toggle-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .view-toggle-btn:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+        
+        .view-toggle-btn.active {
+            background: #059669;
+            color: white;
+            border-color: #059669;
+        }
+        
+        .view-toggle-btn.active:hover {
+            background: #047857;
+        }
 
         .legend-item {
             display: flex;
@@ -1361,65 +1390,75 @@
         <div class="card sections-hidden" id="section5">
             <div class="card-header">
                 <h2><span class="section-number">5</span>📅 Available Appointments</h2>
+                <div class="view-toggle-container" style="display: flex; gap: 5px; align-items: center;">
+                    <button id="listViewBtn" class="view-toggle-btn" onclick="switchToListView()" title="List View">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </button>
+                    <button id="calendarViewBtn" class="view-toggle-btn active" onclick="switchToCalendarView()" title="Calendar View">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="section-instructions">
                 <div class="main-instruction">Current appointment availability for selected locations</div>
                 <div class="sub-instruction">Appointments matching your preferences are highlighted in green. All other available appointments are shown below. Next check in: <span id="nextCheckCountdown">--</span></div>
             </div>
 
-            <div id="appointmentsContainer">
-                <div class="appointments-inactive" id="appointmentsInactive">
-                    <div style="text-align: center; padding: 40px; color: #6b7280;">
-                        <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
-                        <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
-                        <p>Click "Start Monitoring" in Section 4 to begin searching for appointments</p>
+            <!-- List View Content -->
+            <div id="listViewContent" style="display: none;">
+                <div id="appointmentsContainer">
+                    <div class="appointments-inactive" id="appointmentsInactive">
+                        <div style="text-align: center; padding: 40px; color: #6b7280;">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
+                            <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
+                            <p>Click "Start Monitoring" in Section 4 to begin searching for appointments</p>
+                        </div>
+                    </div>
+                    <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Searching for appointments...</p>
+                    </div>
+                    <div id="appointmentsList" style="display: none;">
+                        <!-- Appointments will be populated here by JavaScript -->
                     </div>
                 </div>
-                <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
-                    <div class="loading-spinner"></div>
-                    <p>Searching for appointments...</p>
-                </div>
-                <div id="appointmentsList" style="display: none;">
-                    <!-- Appointments will be populated here by JavaScript -->
-                </div>
             </div>
-        </div>
-        
-        <!-- Section 5b: Calendar View -->
-        <div class="card sections-hidden" id="section5b">
-            <div class="card-header">
-                <h2><span class="section-number">5b</span>🗓️ Calendar View</h2>
-            </div>
-            <div class="section-instructions">
-                <div class="main-instruction">Visual calendar display of appointment availability</div>
-                <div class="sub-instruction">Green = preferred time window, Orange = outside window, Click dates for details</div>
-            </div>
-            <div id="calendarContainer">
-                <div class="calendar-inactive" id="calendarInactive">
+
+            <!-- Calendar View Content (Default) -->
+            <div id="calendarViewContent" style="display: block;">
+                <!-- Calendar inactive state -->
+                <div id="calendarInactive" class="inactive-state">
                     <div style="text-align: center; padding: 40px; color: #6b7280;">
-                        <div style="font-size: 3rem; margin-bottom: 15px;">📅</div>
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🗓️</div>
                         <h3 style="margin-bottom: 10px; color: #374151;">Calendar View Available</h3>
                         <p>Start monitoring to see appointment availability on calendar</p>
                     </div>
                 </div>
-                <div class="calendar-view" id="calendarView" style="display: none;">
-                    <div class="calendar-header">
-                        <button class="btn btn-outline-secondary calendar-nav" onclick="navigateMonth(-1)">‹ Previous</button>
-                        <h3 id="currentMonthYear">Loading...</h3>
-                        <button class="btn btn-outline-secondary calendar-nav" onclick="navigateMonth(1)">Next ›</button>
-                    </div>
-                    <div class="calendar-grid" id="calendarGrid">
-                        <!-- Calendar will be generated here -->
-                    </div>
-                    <div class="calendar-legend">
-                        <div class="legend-item">
-                            <span class="legend-color preferred"></span>
-                            <span>Appointments in preferred time window</span>
+
+                <!-- Calendar content -->
+                <div id="calendarView" style="display: none;">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="calendar-nav-btn" onclick="previousMonth()">‹</button>
+                            <h3 id="currentMonthYear" class="calendar-title">Loading...</h3>
+                            <button class="calendar-nav-btn" onclick="nextMonth()">›</button>
                         </div>
+                        <div class="calendar-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #dcfce7; border: 1px solid #059669;"></div>
+                                <span>Preferred appointments available</span>
+                            </div>
+                        </div>
+                        <div id="calendarGrid" class="calendar-grid"></div>
                     </div>
                 </div>
             </div>
         </div>
+        
 
         <!-- Section 6: Statistics -->
         <div class="card sections-hidden" id="section6">
@@ -2195,8 +2234,6 @@
 
                     // Show appointments section
                     document.getElementById('section5').style.display = 'block';
-                    // Also show calendar view section
-                    document.getElementById('section5b').style.display = 'block';
                     
                     // Start countdown timer for next check
                     startCountdownTimer();
@@ -2616,13 +2653,14 @@
             // Update calendar with processed appointments (now they have isPreferred property)
             updateCalendarData(processedAppointments);
             
-            // Force calendar month to October if we have appointments from test
-            if (processedAppointments.length > 0 && processedAppointments[0].date.includes('10/')) {
-                currentCalendarMonth = new Date(2025, 9, 1); // October 2025
-                console.log('🧪 Forced calendar to October for test appointments');
-            }
             
             showCalendarView();
+            
+            // Check for notifications (only if browser push is enabled)
+            const browserPushCheckbox = document.getElementById('browserPush');
+            if (browserPushCheckbox && browserPushCheckbox.checked) {
+                checkAndNotifyAppointments(processedAppointments);
+            }
             
             updateStats();
             
@@ -2841,6 +2879,101 @@
             return Math.floor((totalMinutes - 9 * 60) / 10) + 54;
         }
 
+        // Browser Push Notifications
+        async function requestNotificationPermission() {
+            console.log('🔔 Requesting notification permission...');
+            
+            if (!('Notification' in window)) {
+                console.warn('❌ Browser notifications not supported');
+                return false;
+            }
+            
+            if (Notification.permission === 'granted') {
+                console.log('✅ Notification permission already granted');
+                return true;
+            }
+            
+            if (Notification.permission === 'denied') {
+                console.warn('❌ Notification permission denied');
+                return false;
+            }
+            
+            const permission = await Notification.requestPermission();
+            console.log('🔔 Notification permission result:', permission);
+            return permission === 'granted';
+        }
+
+        function sendBrowserNotification(title, body, appointments = []) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') {
+                console.warn('❌ Cannot send browser notification - permission not granted');
+                return;
+            }
+            
+            const notification = new Notification(title, {
+                body: body,
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23059669"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                tag: 'rmv-appointment',
+                renotify: true,
+                requireInteraction: true,
+                actions: appointments.length > 0 ? [
+                    { action: 'view', title: 'View Appointments' },
+                    { action: 'book', title: 'Book Now' }
+                ] : undefined
+            });
+            
+            notification.onclick = function() {
+                window.focus();
+                // Scroll to appointments section
+                document.getElementById('section5').scrollIntoView({ behavior: 'smooth' });
+                notification.close();
+            };
+            
+            // Auto close after 10 seconds if not interacted with
+            setTimeout(() => {
+                notification.close();
+            }, 10000);
+            
+            console.log('🔔 Browser notification sent:', title);
+        }
+
+        function checkAndNotifyAppointments(appointments) {
+            console.log('🔍 Checking appointments for notifications...', appointments.length);
+            
+            if (!appointments || appointments.length === 0) {
+                console.log('📅 No appointments to notify about');
+                return;
+            }
+            
+            // Filter for preferred appointments
+            const preferredAppointments = appointments.filter(apt => apt.isPreferred);
+            const allAppointmentsCount = appointments.length;
+            const preferredCount = preferredAppointments.length;
+            
+            console.log('🎯 Preferred appointments:', preferredCount, 'out of', allAppointmentsCount);
+            
+            // Send notification for preferred appointments
+            if (preferredCount > 0) {
+                const title = `🎯 ${preferredCount} Preferred RMV Appointment${preferredCount > 1 ? 's' : ''} Found!`;
+                const body = preferredCount === 1 
+                    ? `${preferredAppointments[0].center} - ${preferredAppointments[0].date} at ${preferredAppointments[0].time}`
+                    : `Found ${preferredCount} appointments matching your time preferences`;
+                
+                sendBrowserNotification(title, body, preferredAppointments);
+                stats.notifications++;
+            } else if (allAppointmentsCount > 0) {
+                // Send notification for any appointments if none preferred
+                const title = `📅 ${allAppointmentsCount} RMV Appointment${allAppointmentsCount > 1 ? 's' : ''} Available`;
+                const body = allAppointmentsCount === 1
+                    ? `${appointments[0].center} - ${appointments[0].date} at ${appointments[0].time}`
+                    : `Found ${allAppointmentsCount} appointments (none match your preferred times)`;
+                
+                sendBrowserNotification(title, body, appointments);
+                stats.notifications++;
+            }
+            
+            updateStats();
+        }
+
         // Update statistics display
         function updateStats() {
             document.getElementById('checksCount').textContent = stats.checks;
@@ -2911,6 +3044,23 @@
             }
         });
 
+        // View Toggle Functions
+        function switchToListView() {
+            document.getElementById('listViewContent').style.display = 'block';
+            document.getElementById('calendarViewContent').style.display = 'none';
+            document.getElementById('listViewBtn').classList.add('active');
+            document.getElementById('calendarViewBtn').classList.remove('active');
+            console.log('📋 Switched to List View');
+        }
+
+        function switchToCalendarView() {
+            document.getElementById('listViewContent').style.display = 'none';
+            document.getElementById('calendarViewContent').style.display = 'block';
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('calendarViewBtn').classList.add('active');
+            console.log('📅 Switched to Calendar View');
+        }
+
         // Calendar View Global Variables
         let currentCalendarMonth = new Date();
         let calendarAppointments = [];
@@ -2961,7 +3111,6 @@
             
             console.log('📅 Calendar: Total appointments to display:', calendarAppointments.length);
             
-            document.getElementById('section5b').style.display = 'block';
             document.getElementById('calendarInactive').style.display = 'none';
             document.getElementById('calendarView').style.display = 'block';
             generateCalendar();
@@ -3273,89 +3422,6 @@
                 originalDisplayAppointments(appointments);
             };
         }
-        
-        // Test appointment display with simulated data  
-        function testAppointmentDisplay() {
-            console.log('🧪 Testing appointment display with simulated data');
-            
-            // Set test dates to October 2025 to test calendar month logic
-            const startDateInput = document.getElementById('startDate');
-            const endDateInput = document.getElementById('endDate');
-            if (startDateInput) startDateInput.value = '2025-10-01';
-            if (endDateInput) endDateInput.value = '2025-10-11';
-            
-            console.log('🧪 Test: Set start date to:', startDateInput ? startDateInput.value : 'N/A');
-            console.log('🧪 Test: Set end date to:', endDateInput ? endDateInput.value : 'N/A');
-            
-            // Force calendar month to October 2025 for testing
-            currentCalendarMonth = new Date(2025, 9, 1); // Month 9 = October (0-based)
-            console.log('🧪 Test: Forced calendar month to:', currentCalendarMonth);
-            
-            // Make sections visible 
-            document.getElementById('section5').style.display = 'block';
-            document.getElementById('section5b').style.display = 'block';
-            
-            // Create test appointments that will be processed through the regular appointment logic
-            // This ensures they get the isPreferred flag properly set
-            const rawTestAppointments = [
-                {
-                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
-                    date: "10/9/2025",
-                    time: "10:30 AM",
-                    datetime: "10/9/2025 10:30:00 AM",
-                    url: "https://rmvmassdotappt.cxmflow.com/test",
-                    type: "test"
-                },
-                {
-                    center: "Lowell77 Middlesex Street, Lowell MA, 01852", 
-                    date: "10/9/2025",
-                    time: "11:00 AM",
-                    datetime: "10/9/2025 11:00:00 AM",
-                    url: "https://rmvmassdotappt.cxmflow.com/test",
-                    type: "test"
-                },
-                {
-                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
-                    date: "10/9/2025", 
-                    time: "1:30 PM",
-                    datetime: "10/9/2025 1:30:00 PM",
-                    url: "https://rmvmassdotappt.cxmflow.com/test",
-                    type: "test"
-                },
-                {
-                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
-                    date: "10/10/2025",
-                    time: "9:30 AM", 
-                    datetime: "10/10/2025 9:30:00 AM",
-                    url: "https://rmvmassdotappt.cxmflow.com/test",
-                    type: "test"
-                },
-                {
-                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
-                    date: "10/10/2025",
-                    time: "2:20 PM",
-                    datetime: "10/10/2025 2:20:00 PM", 
-                    url: "https://rmvmassdotappt.cxmflow.com/test",
-                    type: "test"
-                }
-            ];
-            
-            displayAppointments(rawTestAppointments);
-        }
-        
-        // Add test button to page
-        setTimeout(() => {
-            const section5 = document.getElementById('section5');
-            if (section5 && !document.getElementById('testButton')) {
-                const testBtn = document.createElement('button');
-                testBtn.id = 'testButton';
-                testBtn.textContent = '🧪 Test Appointment Display & Calendar';
-                testBtn.className = 'btn btn-secondary';
-                testBtn.style.margin = '10px';
-                testBtn.onclick = testAppointmentDisplay;
-                section5.insertBefore(testBtn, section5.firstChild);
-            }
-        }, 1000);
         
     </script>
 

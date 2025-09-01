@@ -168,12 +168,41 @@ app.post('/api/extract-personal-data', async (req, res) => {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         logger.error('Personal data extraction failed:', error.message);
         
+        let userFriendlyMessage = error.message;
+        
+        // Provide more helpful error messages based on specific failure types
+        if (error.message.includes('No appointment selected')) {
+            userFriendlyMessage = 'Unable to navigate to customer information page - this URL may not have available appointments right now, or may be an invalid RMV link. Please check that your URL is from a valid RMV appointment scheduling session.';
+        } else if (error.message.includes('Navigation timeout')) {
+            userFriendlyMessage = 'The RMV website took too long to respond. Please try again in a few minutes.';
+        } else if (error.message.includes('net::ERR_')) {
+            userFriendlyMessage = 'Unable to connect to the RMV website. Please check your internet connection and try again.';
+        } else if (error.message.includes('Target closed') || error.message.includes('Protocol error')) {
+            userFriendlyMessage = 'Connection to RMV was interrupted. Please try again.';
+        } else if (error.message.includes('Browser launch') || error.message.includes('browser') || error.message.includes('page')) {
+            userFriendlyMessage = 'Browser initialization failed. Please try again in a moment.';
+        }
+        
         res.status(500).json({
             success: false,
-            error: error.message,
-            duration: duration
+            error: userFriendlyMessage,
+            duration: duration,
+            debugInfo: {
+                originalError: error.message,
+                url: req.body.url ? req.body.url.substring(0, 50) + '...' : 'unknown'
+            }
         });
     }
+});
+
+// Clear sessions endpoint for frontend compatibility
+app.post('/api/clear-sessions', (req, res) => {
+    logger.info('🧹 Clear sessions endpoint called (test server - no actual sessions to clear)');
+    
+    res.json({
+        success: true,
+        message: 'Test server - no sessions to clear'
+    });
 });
 
 // Note: Advanced direct URL generation is now handled by the rmv-direct-url.js module

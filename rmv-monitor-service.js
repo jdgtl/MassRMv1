@@ -1301,8 +1301,11 @@ async function processMonitoringSession(sessionId, session) {
     try {
         logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
         
-        // Use FAST appointments scraping instead of slow 3-step navigation
-        const appointments = await fastAppointmentsScraping(session.rmvUrl, session.selectedCenters);
+        // Use reliable 3-step scraper (same as API endpoint)
+        const appointments = await service.scraper.checkRMVUrl(
+            session.rmvUrl,
+            { locations: session.selectedCenters, ...session.preferences }
+        );
         
         // Debug: Log the actual results structure
         logger.info(`🔍 Results for ${sessionId}:`, {

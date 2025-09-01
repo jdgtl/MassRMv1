@@ -31,24 +31,54 @@ class MinimalRMVExtractor {
         try {
             // Use most basic browser configuration possible
             logger.info('🚀 Launching browser with minimal config...');
-            this.browser = await puppeteer.launch({
-                headless: true,  // Use old headless mode for maximum compatibility
-                args: [
-                    '--no-sandbox'  // Minimal args - only what's absolutely necessary
-                ],
-                timeout: 30000
-            });
+            try {
+                this.browser = await puppeteer.launch({
+                    headless: true,  // Use old headless mode for stability
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-web-security',
+                        '--disable-gpu',
+                        '--no-first-run'
+                        // Removed --no-zygote and --single-process as they may cause frame detachment
+                    ],
+                    timeout: 30000
+                });
+                logger.info('✅ Browser launched successfully');
+            } catch (launchError) {
+                logger.error('❌ Browser launch failed:', {
+                    message: launchError.message,
+                    name: launchError.name,
+                    code: launchError.code
+                });
+                throw launchError;
+            }
 
             const page = await this.browser.newPage();
+            logger.info('✅ New page created');
+            
+            // Small delay to ensure browser is fully initialized
+            await page.waitForTimeout(500);
             
             // Skip all fancy headers and user agents - keep it simple
             logger.info('📋 Loading RMV page directly...');
             
             // Direct navigation with generous timeout
-            await page.goto(url, { 
-                waitUntil: 'domcontentloaded',
-                timeout: 60000 
-            });
+            try {
+                await page.goto(url, { 
+                    waitUntil: 'domcontentloaded',
+                    timeout: 60000 
+                });
+                logger.info('✅ Page navigation completed');
+            } catch (navigationError) {
+                logger.error('❌ Page navigation failed:', {
+                    message: navigationError.message,
+                    name: navigationError.name,
+                    code: navigationError.code
+                });
+                throw navigationError;
+            }
             
             // Quick wait for page to settle
             await page.waitForTimeout(1500);
@@ -64,7 +94,12 @@ class MinimalRMVExtractor {
             return personalData;
             
         } catch (error) {
-            logger.error('❌ Minimal extraction failed:', error.message);
+            logger.error('❌ Minimal extraction failed:', {
+                message: error.message,
+                name: error.name,
+                code: error.code,
+                stack: error.stack?.substring(0, 200)
+            });
             throw error;
         } finally {
             if (this.browser) {
@@ -300,8 +335,16 @@ class MinimalRMVExtractor {
             
             // Verify appointment was actually selected
             if (!appointmentSelected) {
-                logger.error('❌ Failed to select any appointment - cannot proceed to Next step');
-                throw new Error('No appointment selected - cannot proceed');
+                logger.warn('⚠️ Failed to select any appointment - attempting to extract data from current page');
+                // Try to extract data from current page even without appointment selection
+                const currentPageData = await this.extractDataDirect(page);
+                if (currentPageData && (currentPageData.firstName || currentPageData.lastName || currentPageData.email || currentPageData.phone)) {
+                    logger.info('✅ Found personal data on current page without appointment selection');
+                    return currentPageData;
+                } else {
+                    logger.error('❌ No personal data found on current page and no appointments available');
+                    throw new Error('No appointment selected - cannot proceed');
+                }
             } else {
                 logger.info('✅ Appointment selection confirmed - proceeding to Next button');
             }

@@ -1187,6 +1187,9 @@
                     <div class="loading-spinner"></div>
                     <p>Searching for appointments...</p>
                 </div>
+                <div id="appointmentsList" style="display: none;">
+                    <!-- Appointments will be populated here by JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -1391,6 +1394,13 @@
         }
 
         async function connectToRMV() {
+            // Prevent duplicate runs
+            const connectBtn = document.getElementById('connectRMV');
+            if (connectBtn.disabled) {
+                console.log('⚠️ Connection already in progress, ignoring duplicate click');
+                return;
+            }
+
             const rmvUrl = document.getElementById('rmvUrl').value.trim();
             const zipCode = document.getElementById('zipCode').value.trim();
             
@@ -1409,7 +1419,6 @@
                 return;
             }
 
-            const connectBtn = document.getElementById('connectRMV');
             const loader = document.getElementById('extractionLoader');
             const successDiv = document.getElementById('extractionSuccess');
             const statusBadge = document.getElementById('connectionStatus');
@@ -1451,13 +1460,22 @@
                     }, 1000);
                     
                 } else {
-                    throw new Error('Failed to extract personal data');
+                    // Try to get the error message from response
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to extract personal data');
                 }
                 
             } catch (error) {
                 console.error('RMV connection failed:', error);
                 loader.style.display = 'none';
-                alert('Failed to connect to your RMV account. Please check your URL and try again.');
+                
+                // Show the specific error message from backend if available
+                let errorMessage = error.message;
+                if (errorMessage === 'Failed to extract personal data') {
+                    errorMessage = 'Failed to connect to your RMV account. Please check your URL and try again.';
+                }
+                
+                alert(errorMessage);
                 connectBtn.disabled = false;
             }
         }
@@ -1471,6 +1489,7 @@
             console.log('Connect button found:', connectBtn);
             if (connectBtn) {
                 connectBtn.addEventListener('click', connectToRMV);
+                connectBtn.setAttribute('data-listener-added', 'true');
                 console.log('Connect button event listener added');
             }
             
@@ -1902,7 +1921,10 @@
             }
             
             // Show appointments loading state
-            document.getElementById('appointmentsInactive').style.display = 'none';
+            const inactiveEl = document.getElementById('appointmentsInactive');
+            if (inactiveEl) {
+                inactiveEl.style.display = 'none';
+            }
             const loadingEl = document.getElementById('appointmentsLoading');
             if (loadingEl) {
                 loadingEl.style.display = 'block';
@@ -2047,7 +2069,10 @@
             if (loadingEl) {
                 loadingEl.style.display = 'none';
             }
-            document.getElementById('appointmentsInactive').style.display = 'block';
+            const inactiveEl = document.getElementById('appointmentsInactive');
+            if (inactiveEl) {
+                inactiveEl.style.display = 'block';
+            }
         }
 
         // Poll backend for monitoring results (one-time)
@@ -2604,9 +2629,10 @@
                 console.log('Fallback check - Connect button:', connectBtn);
                 console.log('Fallback check - ZIP field:', zipField);
                 
-                if (connectBtn && !connectBtn.onclick) {
+                if (connectBtn && !connectBtn.hasAttribute('data-listener-added')) {
                     console.log('Adding fallback connect event listener');
                     connectBtn.onclick = connectToRMV;
+                    connectBtn.setAttribute('data-listener-added', 'true');
                 }
                 
                 if (zipField) {

@@ -962,18 +962,46 @@
         }
 
         .calendar-nav {
-            font-size: 1.2rem;
-            padding: 8px 16px;
+            font-size: 1.4rem;
+            padding: 12px 20px;
             border: 1px solid #d1d5db;
             background: white;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-width: 44px;
+            font-weight: 600;
         }
 
         .calendar-nav:hover {
             background: #f3f4f6;
             border-color: #9ca3af;
+        }
+
+        .calendar-nav-btn {
+            font-size: 1.8rem;
+            padding: 12px 18px;
+            border: 2px solid #d1d5db;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 50px;
+            min-height: 50px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .calendar-nav-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .calendar-nav-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .calendar-grid {
@@ -1029,6 +1057,7 @@
 
         .calendar-day.has-appointments {
             border: 2px solid transparent;
+            background: #f8fafc;
         }
 
         .calendar-day.preferred-appointments {
@@ -1437,6 +1466,12 @@
                         <h3 style="margin-bottom: 10px; color: #374151;">Calendar View Available</h3>
                         <p>Start monitoring to see appointment availability on calendar</p>
                     </div>
+                </div>
+
+                <!-- Calendar loading state -->
+                <div class="appointments-loading" id="calendarLoading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Searching for appointments...</p>
                 </div>
 
                 <!-- Calendar content -->
@@ -2093,17 +2128,125 @@
 
         // Add log entry
         function addLog(message, type = 'info') {
+            const userFriendlyMessage = makeLogUserFriendly(message, type);
+            
+            // Skip technical messages that aren't useful to users
+            if (userFriendlyMessage === null) {
+                return;
+            }
+            
             const log = document.getElementById('monitorLog');
             const entry = document.createElement('div');
             entry.className = `log-entry ${type}`;
             const timestamp = new Date().toLocaleTimeString();
-            entry.textContent = `[${timestamp}] ${message}`;
+            entry.textContent = `[${timestamp}] ${userFriendlyMessage}`;
             log.insertBefore(entry, log.firstChild);
 
             // Keep only last 50 entries
             while (log.children.length > 50) {
                 log.removeChild(log.lastChild);
             }
+        }
+
+        // Convert technical logs to user-friendly messages
+        function makeLogUserFriendly(message, type) {
+            // Skip overly technical messages
+            if (message.includes('Session ID:') || 
+                message.includes('Using session') ||
+                message.includes('Old monitoring sessions cleared') ||
+                message.includes('Sort mode changed') ||
+                message.includes('ZIP code cleared')) {
+                return null;
+            }
+            
+            // Convert technical messages to user-friendly ones
+            if (message.includes('Backend monitoring') && message.includes('service centers')) {
+                const count = message.match(/(\d+)/)?.[1] || 'multiple';
+                return `🔍 Monitoring ${count} service centers for appointments`;
+            }
+            
+            if (message.includes('Backend will check every 5 minutes')) {
+                return `⏱️ System will check for new appointments automatically every 5 minutes`;
+            }
+            
+            if (message.includes('Backend found') && message.includes('appointments')) {
+                const count = message.match(/(\d+)/)?.[1] || 'some';
+                return `✅ Found ${count} available appointments! Check calendar/list view above`;
+            }
+            
+            if (message.includes('Found') && message.includes('appointments across') && message.includes('locations')) {
+                const appointmentCount = message.match(/Found (\d+)/)?.[1] || 'multiple';
+                const locationCount = message.match(/across (\d+)/)?.[1] || 'multiple';
+                return `🎯 Discovered ${appointmentCount} appointments across ${locationCount} locations`;
+            }
+            
+            if (message.includes('No appointments available at') && message.includes('locations')) {
+                const locationCount = message.match(/(\d+)/)?.[1] || 'selected';
+                return `😕 No appointments currently available at ${locationCount} locations - will check again in 5 minutes`;
+            }
+            
+            if (message.includes('Email notification sent')) {
+                const email = extractedPersonalData?.email || 'your email';
+                return `📧 Appointment alert sent to ${email}`;
+            }
+            
+            if (message.includes('SMS notification sent')) {
+                const phone = extractedPersonalData?.phone || 'your phone';
+                return `📱 Text message alert sent to ${phone}`;
+            }
+            
+            if (message.includes('Webhook notification sent')) {
+                return `🔗 Webhook notification sent to your custom endpoint`;
+            }
+            
+            if (message.includes('Last checked:')) {
+                const time = message.split('Last checked: ')[1];
+                return `🕐 Last appointment check completed at ${time}`;
+            }
+            
+            if (message.includes('ZIP') && message.includes('found') && message.includes('Distance sorting enabled')) {
+                const zipMatch = message.match(/ZIP (\d+)/)?.[1];
+                const cityMatch = message.match(/found: ([^.]+)/)?.[1];
+                return `📍 ZIP ${zipMatch} located: ${cityMatch} - locations sorted by distance`;
+            }
+            
+            if (message.includes('Selected') && message.includes('centers in') && message.includes('region')) {
+                const countMatch = message.match(/Selected (\d+)/)?.[1];
+                const regionMatch = message.match(/centers in ([^(]+)/)?.[1];
+                const totalMatch = message.match(/Total: (\d+)\/8/)?.[1];
+                return `✅ Selected ${countMatch} centers in ${regionMatch?.trim()} (${totalMatch}/8 total)`;
+            }
+            
+            if (message.includes('Deselected') && message.includes('centers in') && message.includes('region')) {
+                const countMatch = message.match(/Deselected (\d+)/)?.[1];
+                const regionMatch = message.match(/centers in ([^r]+) region/)?.[1];
+                return `❌ Deselected ${countMatch} centers in ${regionMatch?.trim()}`;
+            }
+            
+            if (message.includes('Cleared all service center selections')) {
+                return `🧹 Cleared all location selections`;
+            }
+            
+            if (message.includes('Monitoring started successfully')) {
+                return `🚀 Monitoring started! System is now checking for appointments`;
+            }
+            
+            if (message.includes('Monitoring stopped successfully')) {
+                return `⏹️ Monitoring stopped`;
+            }
+            
+            if (message.includes('Backend session') && message.includes('terminated')) {
+                return `🔒 Monitoring session ended successfully`;
+            }
+
+            // Handle expired URL scenario (like after booking)
+            if (message.includes('No appointments available at 0 locations') || 
+                (message.includes('Found 0 appointments') && message.includes('locations'))) {
+                return `ℹ️ RMV session expired (this usually means you successfully booked or the URL is no longer valid)`;
+            }
+            
+            // Return original message for unmatched cases (keep important user messages)
+            return message;
         }
 
         // Clear log
@@ -2171,6 +2314,54 @@
         let currentMonitoringSessionId = null;
         let resultsPollingInterval = null;
 
+        // Helper functions to manage loading states for both calendar and list views
+        function showLoadingStates() {
+            // Hide inactive states
+            const inactiveEl = document.getElementById('appointmentsInactive');
+            if (inactiveEl) inactiveEl.style.display = 'none';
+            
+            const calendarInactiveEl = document.getElementById('calendarInactive');
+            if (calendarInactiveEl) calendarInactiveEl.style.display = 'none';
+            
+            // Show loading states
+            const loadingEl = document.getElementById('appointmentsLoading');
+            if (loadingEl) loadingEl.style.display = 'block';
+            
+            const calendarLoadingEl = document.getElementById('calendarLoading');
+            if (calendarLoadingEl) calendarLoadingEl.style.display = 'block';
+            
+            // Hide content views
+            const listEl = document.getElementById('appointmentsList');
+            if (listEl) listEl.style.display = 'none';
+            
+            const calendarEl = document.getElementById('calendarView');
+            if (calendarEl) calendarEl.style.display = 'none';
+        }
+
+        function hideLoadingStates() {
+            // Hide loading states
+            const loadingEl = document.getElementById('appointmentsLoading');
+            if (loadingEl) loadingEl.style.display = 'none';
+            
+            const calendarLoadingEl = document.getElementById('calendarLoading');
+            if (calendarLoadingEl) calendarLoadingEl.style.display = 'none';
+        }
+
+        function showAppointmentResults() {
+            hideLoadingStates();
+            
+            // Show content based on current view
+            const isCalendarView = document.getElementById('calendarViewContent').style.display !== 'none';
+            
+            if (isCalendarView) {
+                const calendarEl = document.getElementById('calendarView');
+                if (calendarEl) calendarEl.style.display = 'block';
+            } else {
+                const listEl = document.getElementById('appointmentsList');
+                if (listEl) listEl.style.display = 'block';
+            }
+        }
+
         // Start monitoring with backend session
         async function startMonitoring() {
             if (!validateForm()) return;
@@ -2187,15 +2378,8 @@
                 monitorStatus.className = 'status-badge status-active';
             }
             
-            // Show appointments loading state
-            const inactiveEl = document.getElementById('appointmentsInactive');
-            if (inactiveEl) {
-                inactiveEl.style.display = 'none';
-            }
-            const loadingEl = document.getElementById('appointmentsLoading');
-            if (loadingEl) {
-                loadingEl.style.display = 'block';
-            }
+            // Show appointments loading state for both views
+            showLoadingStates();
 
             const startTime = sliderValueToTime(document.getElementById('startTimeSlider').value);
             const endTime = sliderValueToTime(document.getElementById('endTimeSlider').value);
@@ -2723,6 +2907,9 @@
                     }
                 });
             }, 50); // Small delay to ensure DOM is fully rendered
+            
+            // Show appointment results (hides loading states and shows appropriate view)
+            showAppointmentResults();
         }
 
         // Create collapsible date section with preferred/other groups
@@ -2836,6 +3023,13 @@
                     <p>Checking again in <span class="countdown-timer" id="nextCheckCountdown">${nextCheckInterval} minutes</span></p>
                 </div>
             `;
+            
+            // Clear calendar data and regenerate empty calendar
+            calendarAppointments = [];
+            generateCalendar();
+            
+            // Show appointment results (hides loading states and shows appropriate view)
+            showAppointmentResults();
         }
 
         // Countdown timer functions
@@ -3363,6 +3557,29 @@
             document.body.style.overflow = 'hidden';
         }
 
+        function parseLocationString(location) {
+            // Parse location string to separate name and address
+            // Expected formats: "Danvers123 Main Street, Danvers, MA" or "Lawrence25 Main Street, Lawrence, MA"
+            
+            // First try to split by first number to separate name from address
+            const match = location.match(/^([A-Za-z\s]+?)(\d.*)/);
+            
+            if (match) {
+                const name = match[1].trim();
+                const address = match[2].trim();
+                return { name, address };
+            }
+            
+            // Fallback: if no number found, look for common separators
+            if (location.includes(' - ')) {
+                const parts = location.split(' - ');
+                return { name: parts[0].trim(), address: parts[1].trim() };
+            }
+            
+            // Final fallback: use the whole string as name
+            return { name: location, address: '' };
+        }
+
         function generateModalAppointmentsList(appointments) {
             if (appointments.length === 0) {
                 return '<p>No appointments available for this day.</p>';
@@ -3380,9 +3597,13 @@
 
             let html = '';
             Object.entries(appointmentsByLocation).forEach(([location, locationAppointments]) => {
+                // Parse location to separate name and address
+                const locationParts = parseLocationString(location);
+                
                 html += `
                     <div class="modal-location-group">
-                        <h4 class="modal-location-title">${location}</h4>
+                        <h4 class="modal-location-title">${locationParts.name}</h4>
+                        <div class="modal-location-address">${locationParts.address}</div>
                         <div class="modal-appointments-grid">
                 `;
 
@@ -3434,6 +3655,47 @@
                 // Call original function (this now handles calendar update with processed appointments)
                 originalDisplayAppointments(appointments);
             };
+        }
+
+        // View switching functions
+        function switchToListView() {
+            // Toggle view visibility
+            document.getElementById('calendarViewContent').style.display = 'none';
+            document.getElementById('listViewContent').style.display = 'block';
+            
+            // Toggle button states
+            document.getElementById('calendarViewBtn').classList.remove('active');
+            document.getElementById('listViewBtn').classList.add('active');
+            
+            // Update loading states if monitoring is active
+            updateLoadingStatesForCurrentView();
+        }
+
+        function switchToCalendarView() {
+            // Toggle view visibility
+            document.getElementById('listViewContent').style.display = 'none';
+            document.getElementById('calendarViewContent').style.display = 'block';
+            
+            // Toggle button states
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('calendarViewBtn').classList.add('active');
+            
+            // Update loading states if monitoring is active
+            updateLoadingStatesForCurrentView();
+        }
+
+        function updateLoadingStatesForCurrentView() {
+            // Check if monitoring is currently active by looking for loading states
+            const listLoading = document.getElementById('appointmentsLoading');
+            const calendarLoading = document.getElementById('calendarLoading');
+            
+            const isMonitoringActive = (listLoading && listLoading.style.display === 'block') || 
+                                     (calendarLoading && calendarLoading.style.display === 'block');
+            
+            if (isMonitoringActive) {
+                // If monitoring is active, show loading states for both views
+                showLoadingStates();
+            }
         }
         
     </script>
@@ -3510,11 +3772,18 @@
 
         .modal-location-title {
             color: #374151;
-            margin: 0 0 16px 0;
+            margin: 0 0 8px 0;
             font-size: 1.1rem;
             font-weight: 600;
+        }
+
+        .modal-location-address {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0 0 16px 0;
             padding-bottom: 8px;
             border-bottom: 2px solid #e5e7eb;
+            line-height: 1.4;
         }
 
         .modal-appointments-grid {

@@ -943,6 +943,210 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Calendar View Styles */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .calendar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #374151;
+            text-align: center;
+            flex: 1;
+        }
+
+        .calendar-nav {
+            font-size: 1.2rem;
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-nav:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background: #e5e7eb;
+            border-radius: 8px;
+            padding: 2px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-day {
+            background: white;
+            min-height: 60px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .calendar-day.other-month {
+            background: #f9fafb;
+            color: #9ca3af;
+            cursor: default;
+        }
+
+        .calendar-day.other-month:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .calendar-day.has-appointments {
+            border: 2px solid transparent;
+        }
+
+        .calendar-day.preferred-appointments {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .calendar-day.available-appointments {
+            background: #fed7aa;
+            border-color: #f97316;
+        }
+
+        .calendar-day.mixed-appointments {
+            background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 50%, #fed7aa 50%, #fed7aa 100%);
+            border-color: #22c55e;
+        }
+
+        .calendar-day-number {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .calendar-day.other-month .calendar-day-number {
+            color: #9ca3af;
+        }
+
+        .appointment-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin-top: auto;
+        }
+
+        .appointment-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .appointment-dot.outside-window {
+            background: #f97316;
+        }
+
+        .appointment-count {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 2px;
+        }
+
+        .calendar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+        }
+
+        .legend-color.preferred {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .legend-color.available {
+            background: #fed7aa;
+            border-color: #f97316;
+        }
+
+        .legend-color.no-appointments {
+            background: white;
+            border-color: #d1d5db;
+        }
+
+        /* Mobile responsive calendar */
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 45px;
+                padding: 4px;
+            }
+            
+            .calendar-day-number {
+                font-size: 0.75rem;
+            }
+            
+            .appointment-count {
+                font-size: 0.6rem;
+            }
+            
+            .calendar-legend {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .calendar-header h3 {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1189,6 +1393,50 @@
                 </div>
                 <div id="appointmentsList" style="display: none;">
                     <!-- Appointments will be populated here by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 5b: Calendar View -->
+        <div class="card sections-hidden" id="section5b">
+            <div class="card-header">
+                <h2><span class="section-number">5b</span>🗓️ Calendar View</h2>
+            </div>
+            <div class="section-instructions">
+                <div class="main-instruction">Visual calendar display of appointment availability</div>
+                <div class="sub-instruction">Green = preferred time window, Orange = outside window, Click dates for details</div>
+            </div>
+            <div id="calendarContainer">
+                <div class="calendar-inactive" id="calendarInactive">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📅</div>
+                        <h3 style="margin-bottom: 10px; color: #374151;">Calendar View Available</h3>
+                        <p>Start monitoring to see appointment availability on calendar</p>
+                    </div>
+                </div>
+                <div class="calendar-view" id="calendarView" style="display: none;">
+                    <div class="calendar-header">
+                        <button class="btn btn-outline-secondary calendar-nav" onclick="navigateMonth(-1)">‹ Previous</button>
+                        <h3 id="currentMonthYear">Loading...</h3>
+                        <button class="btn btn-outline-secondary calendar-nav" onclick="navigateMonth(1)">Next ›</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                    <div class="calendar-legend">
+                        <div class="legend-item">
+                            <span class="legend-color preferred"></span>
+                            <span>Appointments in preferred time window</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color available"></span>
+                            <span>Appointments outside time window</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color no-appointments"></span>
+                            <span>No appointments available</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2652,6 +2900,423 @@
                 }
             }
         });
+
+        // Calendar View Global Variables
+        let currentCalendarMonth = new Date();
+        let calendarAppointments = [];
+
+        // Calendar View Functions
+        function showCalendarView() {
+            document.getElementById('section5b').style.display = 'block';
+            document.getElementById('calendarInactive').style.display = 'none';
+            document.getElementById('calendarView').style.display = 'block';
+            generateCalendar();
+        }
+
+        function hideCalendarView() {
+            document.getElementById('calendarInactive').style.display = 'block';
+            document.getElementById('calendarView').style.display = 'none';
+        }
+
+        function updateCalendarData(appointments) {
+            calendarAppointments = appointments || [];
+            if (document.getElementById('calendarView').style.display !== 'none') {
+                generateCalendar();
+            }
+        }
+
+        function generateCalendar() {
+            const year = currentCalendarMonth.getFullYear();
+            const month = currentCalendarMonth.getMonth();
+            
+            // Update header
+            document.getElementById('currentMonthYear').textContent = 
+                new Date(year, month).toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            // Get previous month days needed
+            const prevMonth = new Date(year, month - 1, 0);
+            const daysInPrevMonth = prevMonth.getDate();
+
+            let calendarHTML = '';
+            
+            // Day headers
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Previous month trailing days
+            for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                calendarHTML += `<div class="calendar-day other-month">
+                    <span class="calendar-day-number">${day}</span>
+                </div>`;
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(year, month, day);
+                const dateString = formatDateForComparison(currentDate);
+                
+                const dayAppointments = getDayAppointments(dateString);
+                const appointmentInfo = categorizeAppointments(dayAppointments);
+                
+                let dayClasses = 'calendar-day';
+                let appointmentIndicators = '';
+                
+                if (dayAppointments.length > 0) {
+                    dayClasses += ' has-appointments';
+                    
+                    if (appointmentInfo.hasPreferred && appointmentInfo.hasOutside) {
+                        dayClasses += ' mixed-appointments';
+                    } else if (appointmentInfo.hasPreferred) {
+                        dayClasses += ' preferred-appointments';
+                    } else {
+                        dayClasses += ' available-appointments';
+                    }
+                    
+                    // Add appointment indicators
+                    appointmentIndicators = `
+                        <div class="appointment-indicators">
+                            ${appointmentInfo.preferredCount > 0 ? 
+                                Array(Math.min(appointmentInfo.preferredCount, 3)).fill(0).map(() => 
+                                    '<div class="appointment-dot"></div>').join('') : ''}
+                            ${appointmentInfo.outsideCount > 0 ? 
+                                Array(Math.min(appointmentInfo.outsideCount, 3)).fill(0).map(() => 
+                                    '<div class="appointment-dot outside-window"></div>').join('') : ''}
+                        </div>
+                        <div class="appointment-count">${dayAppointments.length}</div>
+                    `;
+                }
+                
+                calendarHTML += `
+                    <div class="${dayClasses}" onclick="showDayModal('${dateString}', ${day})">
+                        <span class="calendar-day-number">${day}</span>
+                        ${appointmentIndicators}
+                    </div>
+                `;
+            }
+
+            // Next month leading days
+            const totalCells = Math.ceil((startingDayOfWeek + daysInMonth) / 7) * 7;
+            const remainingCells = totalCells - (startingDayOfWeek + daysInMonth);
+            
+            for (let day = 1; day <= remainingCells; day++) {
+                calendarHTML += `<div class="calendar-day other-month">
+                    <span class="calendar-day-number">${day}</span>
+                </div>`;
+            }
+
+            document.getElementById('calendarGrid').innerHTML = calendarHTML;
+        }
+
+        function getDayAppointments(dateString) {
+            return calendarAppointments.filter(appointment => {
+                const appointmentDate = formatDateForComparison(new Date(appointment.date));
+                return appointmentDate === dateString;
+            });
+        }
+
+        function categorizeAppointments(appointments) {
+            let hasPreferred = false;
+            let hasOutside = false;
+            let preferredCount = 0;
+            let outsideCount = 0;
+
+            appointments.forEach(appointment => {
+                if (isAppointmentInPreferredWindow(appointment)) {
+                    hasPreferred = true;
+                    preferredCount++;
+                } else {
+                    hasOutside = true;
+                    outsideCount++;
+                }
+            });
+
+            return { hasPreferred, hasOutside, preferredCount, outsideCount };
+        }
+
+        function formatDateForComparison(date) {
+            return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+        }
+
+        function navigateMonth(direction) {
+            currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + direction);
+            generateCalendar();
+        }
+
+        function showDayModal(dateString, dayNumber) {
+            const dayAppointments = getDayAppointments(dateString);
+            
+            if (dayAppointments.length === 0) {
+                return; // Don't show modal for days with no appointments
+            }
+
+            const modalDate = new Date(dateString);
+            const modalHTML = `
+                <div id="dayModal" class="modal-overlay" onclick="closeDayModal(event)">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>Appointments for ${modalDate.toLocaleDateString('en-US', { 
+                                weekday: 'long',
+                                month: 'long', 
+                                day: 'numeric',
+                                year: 'numeric' 
+                            })}</h3>
+                            <button class="modal-close" onclick="closeDayModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            ${generateModalAppointmentsList(dayAppointments)}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function generateModalAppointmentsList(appointments) {
+            if (appointments.length === 0) {
+                return '<p>No appointments available for this day.</p>';
+            }
+
+            // Group by location
+            const appointmentsByLocation = {};
+            appointments.forEach(appointment => {
+                const location = appointment.center || appointment.officeName || 'Unknown Location';
+                if (!appointmentsByLocation[location]) {
+                    appointmentsByLocation[location] = [];
+                }
+                appointmentsByLocation[location].push(appointment);
+            });
+
+            let html = '';
+            Object.entries(appointmentsByLocation).forEach(([location, locationAppointments]) => {
+                html += `
+                    <div class="modal-location-group">
+                        <h4 class="modal-location-title">${location}</h4>
+                        <div class="modal-appointments-grid">
+                `;
+
+                locationAppointments.forEach(appointment => {
+                    const isPreferred = isAppointmentInPreferredWindow(appointment);
+                    const timeClass = isPreferred ? 'preferred' : 'available';
+                    const timeLabel = isPreferred ? 'In preferred window' : 'Outside preferred window';
+
+                    html += `
+                        <div class="modal-appointment-card ${timeClass}">
+                            <div class="modal-appointment-time">
+                                ${appointment.time}
+                            </div>
+                            <div class="modal-appointment-label">
+                                ${timeLabel}
+                            </div>
+                            <a href="${appointment.url}" target="_blank" class="modal-appointment-book">
+                                Book Appointment
+                            </a>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function closeDayModal(event) {
+            if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) {
+                return;
+            }
+            
+            const modal = document.getElementById('dayModal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Update the displayAppointments function to also update calendar
+        const originalDisplayAppointments = window.displayAppointments;
+        if (originalDisplayAppointments) {
+            window.displayAppointments = function(appointments) {
+                // Call original function
+                originalDisplayAppointments(appointments);
+                
+                // Update calendar view
+                updateCalendarData(appointments);
+                
+                // Show calendar section when appointments are displayed
+                if (appointments && appointments.length > 0) {
+                    showCalendarView();
+                }
+            };
+        }
+        
     </script>
+
+    <!-- Modal Styles -->
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #374151;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px;
+            line-height: 1;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: #e5e7eb;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(80vh - 120px);
+        }
+
+        .modal-location-group {
+            margin-bottom: 30px;
+        }
+
+        .modal-location-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-location-title {
+            color: #374151;
+            margin: 0 0 16px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .modal-appointments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .modal-appointment-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-appointment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-appointment-card.preferred {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .modal-appointment-card.available {
+            background: #fed7aa;
+            border-color: #f97316;
+        }
+
+        .modal-appointment-time {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .modal-appointment-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .modal-appointment-book {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .modal-appointment-book:hover {
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 10px;
+                max-height: 90vh;
+            }
+
+            .modal-appointments-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </body>
 </html>

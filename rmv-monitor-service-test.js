@@ -32,9 +32,9 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use(express.static(__dirname)); // Serve files from root directory
 
-// Serve the improved interface as default
+// Serve the working interface as default
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index-improved.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Test API Routes

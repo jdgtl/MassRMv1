@@ -12,10 +12,11 @@ export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 echo "📦 Installing production dependencies only..."
 npm ci --production --no-optional
 
-# Set Railway variables to prevent Chromium download
+# Set Railway variables to prevent Chromium download (CORRECTED SYNTAX)
 echo "⚙️ Setting Railway environment variables..."
-railway variables set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-railway variables set NODE_ENV=production
+railway variables --set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+railway variables --set PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+railway variables --set NODE_ENV=production
 
 # Quick deploy
 echo "🚀 Deploying..."

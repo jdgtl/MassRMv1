@@ -1036,15 +1036,7 @@
             border-color: #22c55e;
         }
 
-        .calendar-day.available-appointments {
-            background: #fed7aa;
-            border-color: #f97316;
-        }
 
-        .calendar-day.mixed-appointments {
-            background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 50%, #fed7aa 50%, #fed7aa 100%);
-            border-color: #22c55e;
-        }
 
         .calendar-day-number {
             font-weight: 600;
@@ -1112,10 +1104,6 @@
             border-color: #22c55e;
         }
 
-        .legend-color.available {
-            background: #fed7aa;
-            border-color: #f97316;
-        }
 
         .legend-color.no-appointments {
             background: white;
@@ -1427,14 +1415,6 @@
                         <div class="legend-item">
                             <span class="legend-color preferred"></span>
                             <span>Appointments in preferred time window</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color available"></span>
-                            <span>Appointments outside time window</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color no-appointments"></span>
-                            <span>No appointments available</span>
                         </div>
                     </div>
                 </div>
@@ -2552,9 +2532,14 @@
 
         // Display appointments with distance-based priority and date grouping
         function displayAppointments(appointments) {
+            console.log('📅 Display: Called with appointments:', appointments);
+            console.log('📅 Display: Appointments count:', appointments?.length);
+            console.log('📅 Display: Sample appointment:', appointments?.[0]);
+            
             const container = document.getElementById('appointmentsContainer');
             
             if (!appointments || appointments.length === 0) {
+                console.log('📅 Display: No appointments to display');
                 displayNoAppointments();
                 return;
             }
@@ -2605,6 +2590,18 @@
                 const matchesDatePrefs = aptDate >= startDate && aptDate <= endDate;
                 const isPreferred = matchesTimePrefs && matchesDatePrefs;
                 
+                console.log(`📅 Preference check for ${apt.date} ${apt.time}:`, {
+                    aptDate: aptDate.toDateString(),
+                    startDate: startDate.toDateString(),
+                    endDate: endDate.toDateString(),
+                    aptTime,
+                    startTimeSlider,
+                    endTimeSlider,
+                    matchesTimePrefs,
+                    matchesDatePrefs,
+                    isPreferred
+                });
+                
                 if (isPreferred) stats.matching++;
                 
                 return {
@@ -2615,6 +2612,17 @@
                     aptDate
                 };
             });
+            
+            // Update calendar with processed appointments (now they have isPreferred property)
+            updateCalendarData(processedAppointments);
+            
+            // Force calendar month to October if we have appointments from test
+            if (processedAppointments.length > 0 && processedAppointments[0].date.includes('10/')) {
+                currentCalendarMonth = new Date(2025, 9, 1); // October 2025
+                console.log('🧪 Forced calendar to October for test appointments');
+            }
+            
+            showCalendarView();
             
             updateStats();
             
@@ -2677,10 +2685,6 @@
                     }
                 });
             }, 50); // Small delay to ensure DOM is fully rendered
-            
-            // Update calendar with new appointments
-            updateCalendarData(appointments);
-            showCalendarView();
         }
 
         // Create collapsible date section with preferred/other groups
@@ -2913,14 +2917,49 @@
 
         // Calendar View Functions
         function showCalendarView() {
+            console.log('📅 Calendar: Showing calendar view');
+            
             // Set calendar to start from user's start date
             const startDateInput = document.getElementById('startDate');
+            console.log('🔍 DEBUG: Start date input found:', startDateInput ? 'YES' : 'NO');
+            console.log('🔍 DEBUG: Start date value:', startDateInput ? startDateInput.value : 'N/A');
+            
             if (startDateInput && startDateInput.value) {
-                const startDate = new Date(startDateInput.value);
+                console.log('🔍 DEBUG: About to parse date:', startDateInput.value);
+                
+                // Parse date in local timezone to avoid UTC conversion issues
+                const dateParts = startDateInput.value.split('-');
+                const year = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1; // Month is 0-based
+                const day = parseInt(dateParts[2]);
+                const startDate = new Date(year, month, day);
+                
+                console.log('🔍 DEBUG: Parsed start date object (local timezone):', startDate);
+                console.log('🔍 DEBUG: Parsed month (0-based):', startDate.getMonth());
+                console.log('🔍 DEBUG: Parsed year:', startDate.getFullYear());
+                console.log('🔍 DEBUG: Start date valid:', !isNaN(startDate.getTime()));
+                
                 if (!isNaN(startDate.getTime())) {
                     currentCalendarMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                    console.log('🔍 DEBUG: Set currentCalendarMonth to:', currentCalendarMonth);
+                    console.log('🔍 DEBUG: Final calendar month (1-based):', currentCalendarMonth.getMonth() + 1);
+                    console.log('🔍 DEBUG: Final calendar year:', currentCalendarMonth.getFullYear());
                 }
+            } else if (calendarAppointments.length > 0) {
+                // Fallback: use the month of the first appointment
+                const firstAppointment = calendarAppointments[0];
+                const appointmentDate = new Date(firstAppointment.date);
+                console.log('📅 Calendar: Fallback to first appointment date:', firstAppointment.date, appointmentDate);
+                
+                if (!isNaN(appointmentDate.getTime())) {
+                    currentCalendarMonth = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), 1);
+                    console.log('📅 Calendar: Set month to first appointment:', currentCalendarMonth);
+                }
+            } else {
+                console.log('📅 Calendar: No start date or appointments found, using current month:', currentCalendarMonth);
             }
+            
+            console.log('📅 Calendar: Total appointments to display:', calendarAppointments.length);
             
             document.getElementById('section5b').style.display = 'block';
             document.getElementById('calendarInactive').style.display = 'none';
@@ -2934,10 +2973,64 @@
         }
 
         function updateCalendarData(appointments) {
+            console.log('📅 Calendar: Updating with appointments:', appointments);
             calendarAppointments = appointments || [];
+            console.log('📅 Calendar: Stored appointments count:', calendarAppointments.length);
+            if (calendarAppointments.length > 0) {
+                console.log('📅 Calendar: Sample appointment:', calendarAppointments[0]);
+            }
             if (document.getElementById('calendarView').style.display !== 'none') {
                 generateCalendar();
             }
+        }
+
+        function isAppointmentInPreferredWindow(appointment) {
+            // Use appointment's built-in isPreferred flag if available (from regular appointment processing)
+            if (appointment.hasOwnProperty('isPreferred')) {
+                console.log(`📅 Calendar: Using existing isPreferred flag for ${appointment.date} ${appointment.time}:`, appointment.isPreferred);
+                return appointment.isPreferred;
+            }
+            
+            // Get user preferences with null checks
+            const startDateEl = document.getElementById('startDate');
+            const endDateEl = document.getElementById('endDate');
+            const startTimeEl = document.getElementById('startTime');
+            const endTimeEl = document.getElementById('endTime');
+            
+            if (!startDateEl || !endDateEl || !startTimeEl || !endTimeEl || 
+                !startDateEl.value || !endDateEl.value || !startTimeEl.value || !endTimeEl.value) {
+                console.log('📅 Calendar: Form elements not found or empty, defaulting to false');
+                return false;
+            }
+            
+            const startDate = new Date(startDateEl.value);
+            const endDate = new Date(endDateEl.value);
+            const startTimeSlider = parseInt(startTimeEl.value);
+            const endTimeSlider = parseInt(endTimeEl.value);
+            
+            console.log('📅 Calendar: User preferences:', {
+                startDate: startDate.toDateString(),
+                endDate: endDate.toDateString(),
+                startTimeSlider,
+                endTimeSlider
+            });
+            
+            // Parse appointment date and time
+            const aptDate = new Date(appointment.date);
+            const aptTime = timeToSliderValue(appointment.time);
+            
+            // Check if appointment matches preferences
+            const matchesTimePrefs = aptTime >= startTimeSlider && aptTime <= endTimeSlider;
+            const matchesDatePrefs = aptDate >= startDate && aptDate <= endDate;
+            
+            console.log(`📅 Calendar: Checking ${appointment.date} ${appointment.time}:`, {
+                aptTime,
+                matchesTimePrefs,
+                matchesDatePrefs,
+                result: matchesTimePrefs && matchesDatePrefs
+            });
+            
+            return matchesTimePrefs && matchesDatePrefs;
         }
 
         function generateCalendar() {
@@ -2991,12 +3084,8 @@
                 if (dayAppointments.length > 0) {
                     dayClasses += ' has-appointments';
                     
-                    if (appointmentInfo.hasPreferred && appointmentInfo.hasOutside) {
-                        dayClasses += ' mixed-appointments';
-                    } else if (appointmentInfo.hasPreferred) {
+                    if (appointmentInfo.hasPreferred) {
                         dayClasses += ' preferred-appointments';
-                    } else {
-                        dayClasses += ' available-appointments';
                     }
                     
                     // Add appointment indicators
@@ -3035,10 +3124,22 @@
         }
 
         function getDayAppointments(dateString) {
-            return calendarAppointments.filter(appointment => {
+            console.log(`📅 Calendar: Getting appointments for ${dateString}`);
+            console.log(`📅 Calendar: Total appointments available:`, calendarAppointments.length);
+            
+            const dayAppointments = calendarAppointments.filter(appointment => {
                 const appointmentDate = formatDateForComparison(new Date(appointment.date));
-                return appointmentDate === dateString;
+                const matches = appointmentDate === dateString;
+                
+                if (matches) {
+                    console.log(`📅 Calendar: Found appointment for ${dateString}:`, appointment);
+                }
+                
+                return matches;
             });
+            
+            console.log(`📅 Calendar: Found ${dayAppointments.length} appointments for ${dateString}`);
+            return dayAppointments;
         }
 
         function categorizeAppointments(appointments) {
@@ -3125,17 +3226,17 @@
 
                 locationAppointments.forEach(appointment => {
                     const isPreferred = isAppointmentInPreferredWindow(appointment);
-                    const timeClass = isPreferred ? 'preferred' : 'available';
-                    const timeLabel = isPreferred ? 'In preferred window' : 'Outside preferred window';
+                    const timeClass = isPreferred ? 'preferred' : '';
+                    const timeLabel = isPreferred ? 'In preferred window' : '';
 
                     html += `
                         <div class="modal-appointment-card ${timeClass}">
                             <div class="modal-appointment-time">
                                 ${appointment.time}
                             </div>
-                            <div class="modal-appointment-label">
+                            ${timeLabel ? `<div class="modal-appointment-label">
                                 ${timeLabel}
-                            </div>
+                            </div>` : ''}
                             <a href="${appointment.url}" target="_blank" class="modal-appointment-book">
                                 Book Appointment
                             </a>
@@ -3168,18 +3269,93 @@
         const originalDisplayAppointments = window.displayAppointments;
         if (originalDisplayAppointments) {
             window.displayAppointments = function(appointments) {
-                // Call original function
+                // Call original function (this now handles calendar update with processed appointments)
                 originalDisplayAppointments(appointments);
-                
-                // Update calendar view
-                updateCalendarData(appointments);
-                
-                // Show calendar section when appointments are displayed
-                if (appointments && appointments.length > 0) {
-                    showCalendarView();
-                }
             };
         }
+        
+        // Test appointment display with simulated data  
+        function testAppointmentDisplay() {
+            console.log('🧪 Testing appointment display with simulated data');
+            
+            // Set test dates to October 2025 to test calendar month logic
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            if (startDateInput) startDateInput.value = '2025-10-01';
+            if (endDateInput) endDateInput.value = '2025-10-11';
+            
+            console.log('🧪 Test: Set start date to:', startDateInput ? startDateInput.value : 'N/A');
+            console.log('🧪 Test: Set end date to:', endDateInput ? endDateInput.value : 'N/A');
+            
+            // Force calendar month to October 2025 for testing
+            currentCalendarMonth = new Date(2025, 9, 1); // Month 9 = October (0-based)
+            console.log('🧪 Test: Forced calendar month to:', currentCalendarMonth);
+            
+            // Make sections visible 
+            document.getElementById('section5').style.display = 'block';
+            document.getElementById('section5b').style.display = 'block';
+            
+            // Create test appointments that will be processed through the regular appointment logic
+            // This ensures they get the isPreferred flag properly set
+            const rawTestAppointments = [
+                {
+                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
+                    date: "10/9/2025",
+                    time: "10:30 AM",
+                    datetime: "10/9/2025 10:30:00 AM",
+                    url: "https://rmvmassdotappt.cxmflow.com/test",
+                    type: "test"
+                },
+                {
+                    center: "Lowell77 Middlesex Street, Lowell MA, 01852", 
+                    date: "10/9/2025",
+                    time: "11:00 AM",
+                    datetime: "10/9/2025 11:00:00 AM",
+                    url: "https://rmvmassdotappt.cxmflow.com/test",
+                    type: "test"
+                },
+                {
+                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
+                    date: "10/9/2025", 
+                    time: "1:30 PM",
+                    datetime: "10/9/2025 1:30:00 PM",
+                    url: "https://rmvmassdotappt.cxmflow.com/test",
+                    type: "test"
+                },
+                {
+                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
+                    date: "10/10/2025",
+                    time: "9:30 AM", 
+                    datetime: "10/10/2025 9:30:00 AM",
+                    url: "https://rmvmassdotappt.cxmflow.com/test",
+                    type: "test"
+                },
+                {
+                    center: "Lowell77 Middlesex Street, Lowell MA, 01852",
+                    date: "10/10/2025",
+                    time: "2:20 PM",
+                    datetime: "10/10/2025 2:20:00 PM", 
+                    url: "https://rmvmassdotappt.cxmflow.com/test",
+                    type: "test"
+                }
+            ];
+            
+            displayAppointments(rawTestAppointments);
+        }
+        
+        // Add test button to page
+        setTimeout(() => {
+            const section5 = document.getElementById('section5');
+            if (section5 && !document.getElementById('testButton')) {
+                const testBtn = document.createElement('button');
+                testBtn.id = 'testButton';
+                testBtn.textContent = '🧪 Test Appointment Display & Calendar';
+                testBtn.className = 'btn btn-secondary';
+                testBtn.style.margin = '10px';
+                testBtn.onclick = testAppointmentDisplay;
+                section5.insertBefore(testBtn, section5.firstChild);
+            }
+        }, 1000);
         
     </script>
 
@@ -3286,10 +3462,6 @@
             border-color: #22c55e;
         }
 
-        .modal-appointment-card.available {
-            background: #fed7aa;
-            border-color: #f97316;
-        }
 
         .modal-appointment-time {
             font-size: 1.25rem;

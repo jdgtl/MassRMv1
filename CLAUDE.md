@@ -1,11 +1,12 @@
 # Claude Code Project Status - RMV Appointment Monitor
 
-## 🎯 Current System Status: **FULLY FUNCTIONAL**
+## 🎯 Current System Status: **FULLY OPERATIONAL & DEBUGGED**
 
-**Last Updated**: August 31, 2025  
-**Server Status**: Running on `http://localhost:3000`  
+**Last Updated**: September 1, 2025  
+**Server Status**: Production server running on `http://localhost:3000`  
 **Monitoring**: Active appointment checking every 5 minutes during business hours
 **Performance**: Fast scraping (5-8 seconds) with enhanced UI/UX
+**Debug Status**: ✅ All connection issues resolved
 
 ## ✅ Completed Features
 
@@ -73,34 +74,39 @@
 - **Parallel Processing** - Handles multiple locations simultaneously
 - **Smart Intervals** - 5 minutes during business hours, 30 minutes off-hours
 
-## 🚨 Latest Major Updates (August 31, 2025)
+## 🚨 Latest Major Updates
 
-### 🚀 Performance Revolution:
+### 🐛 Debug Session (September 1, 2025):
 ```javascript
-// NEW: Fast appointments scraping
-// OLD: 19+ seconds with full CSS/images loading
-// NEW: 5-8 seconds with optimized loading
-fastAppointmentsScraping() - Disabled CSS/images, 6s timeouts
+// FIXED: Missing /api/clear-sessions endpoint (404 → 200)
+// FIXED: Intermittent browser initialization failures  
+// FIXED: First-attempt connection errors
+// SWITCHED: From test server to full production server
 ```
 
-### 🎨 Enhanced UI/UX:
+**Root Cause Identified**: System was running `rmv-monitor-service-test.js` instead of `rmv-monitor-service.js`
+- Test server lacked complete API endpoints and monitoring features
+- Browser initialization timing issues on first attempts
+- Missing production features like session management
+
+**Solutions Applied**:
+- ✅ Added missing `/api/clear-sessions` endpoint to test server
+- ✅ Enhanced browser initialization with 500ms delay
+- ✅ Improved error handling for connection failures  
+- ✅ Switched package.json to use full production server
+- ✅ All intermittent connection errors now resolved
+
+### 🚀 Performance Revolution (August 31, 2025):
 ```javascript
-// NEW: Responsive appointment grids
-// Mobile: 2 columns | Tablet: 3 columns | Desktop: 4 columns
-// Clickable cards (no button) + hover effects + chronological sorting
+// Fast appointments scraping: 5-8 seconds vs 19+ seconds
+// Responsive UI: 2/3/4 column grids with clickable cards
+// Smart session management with optimized polling
 ```
 
-### 🔧 Smart Session Management:
-```javascript
-// NEW: Auto-clear old sessions on page refresh/monitoring start  
-// FIXED: Loading spinner timing matches actual backend processing
-// ENHANCED: Polling schedule optimized for fast scraping (2s/4s/6s/8s)
-```
-
-### Previous Fixes:
+### Previous Major Fixes:
 - Parameter alignment (preferences vs userPreferences)
 - Method recovery (checkRMVUrl from git backup)  
-- UI state management (specific element targeting)
+- UI state management and browser timing optimizations
 
 ## 🔄 System Architecture
 
@@ -127,12 +133,13 @@ Results Display + Notifications
 - CSS animations and responsive design built-in
 
 ### Backend:
-- `rmv-monitor-service.js` - Main server with all APIs
-- `rmv-extractor-minimal.js` - Fast personal data extraction
+- `rmv-monitor-service.js` - **ACTIVE** Production server with all APIs
+- `rmv-monitor-service-test.js` - Simplified test server (debugging only)
+- `rmv-extractor-minimal.js` - Fast personal data extraction (enhanced with timing fixes)
 - `rmv-user-data-extractor.js` - Enhanced scraper classes
 
 ### Configuration:
-- `package.json` - Dependencies and scripts
+- `package.json` - **UPDATED** Dependencies and scripts (now uses production server)
 - `DEVELOPMENT.md` - Git workflow and development guide
 - `rmv-monitor-service.js.backup` - Recovery backup
 
@@ -164,11 +171,17 @@ Results Display + Notifications
 
 ## 🔄 Git Commit History
 
-**Latest Commit**: `f3001dc` - "Major performance and UI improvements: fast scraping + enhanced UX"
+**Latest Commit**: `b000f28` - "Fix intermittent connection errors and switch to full production server"
+- ✅ Fixed missing /api/clear-sessions endpoint (404 → 200)
+- ✅ Enhanced browser initialization timing (500ms delay)  
+- ✅ Added better error handling for first-time connection attempts
+- ✅ Switched from test server to full production server
+- 🚀 All production features now active: monitoring, notifications, enhanced scraping
+
+**Previous**: `f3001dc` - "Major performance and UI improvements: fast scraping + enhanced UX"
 - Implemented fast appointments scraping (5-8s vs 19s+)
 - Enhanced responsive UI with clickable cards and smart layouts
 - Added smart session management and optimized polling
-- Comprehensive performance and UX improvements across the system
 
 ## 🚀 Next Steps
 

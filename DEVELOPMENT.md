@@ -48,11 +48,13 @@ git show HEAD~1:filename.js
 ### Backend APIs:
 - `POST /api/extract-personal-data` - Extract user info from RMV URL
 - `POST /api/scrape-rmv-appointments` - Check appointments for selected centers
+- `POST /api/clear-sessions` - Clear monitoring sessions
 
 ### Key Files:
 - `public/index.html` - Complete frontend application
-- `rmv-monitor-service.js` - Main server with APIs
-- `rmv-extractor-minimal.js` - Fast 9.3s personal data extraction
+- `rmv-monitor-service.js` - **PRODUCTION** server with full monitoring features
+- `rmv-monitor-service-test.js` - Simplified test server (development only)
+- `rmv-extractor-minimal.js` - Fast 9.3s personal data extraction (timing enhanced)
 - `rmv-user-data-extractor.js` - Enhanced scraper classes
 
 ## 🔧 Development Commands
@@ -72,21 +74,37 @@ curl -X POST http://localhost:3000/api/extract-personal-data \
 
 ## 🚨 Common Issues & Solutions
 
-### 1. Monitoring Not Starting
+### 1. Connection/API Errors (SOLVED ✅)
+**Issue**: 404 errors for `/api/clear-sessions`, intermittent 500 errors  
+**Root Cause**: Running test server instead of production server  
+**Solution**: Switch `package.json` to use `rmv-monitor-service.js`
+```bash
+# package.json should have:
+"start": "node rmv-monitor-service.js"
+# NOT: "node rmv-monitor-service-test.js"
+```
+
+### 2. Monitoring Not Starting
 - Check browser console for JavaScript errors
 - Verify all form validation passes
 - Ensure `checkRMVUrl` method exists in service
 - Check parameter names match between frontend/backend
 
-### 2. Personal Data Extraction Fails
+### 3. Personal Data Extraction Fails
 - Verify RMV URL format (must contain 'rmvmassdotappt.cxmflow.com')
 - Check if RMV site structure changed
 - Monitor server logs for Puppeteer errors
+- **New**: Browser initialization timing improved with 500ms delay
 
-### 3. Missing Methods/Functions
+### 4. Missing Methods/Functions
 - Check git history: `git log --oneline`
 - Look for backup files: `*.backup`
 - Use git show to restore: `git show HEAD~1:file.js`
+
+### 5. Test vs Production Server Confusion
+- **Production**: `rmv-monitor-service.js` (full features)
+- **Test**: `rmv-monitor-service-test.js` (debugging only)
+- Always use production server for actual monitoring
 
 ## 📝 Code Standards
 

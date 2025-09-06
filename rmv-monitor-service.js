@@ -989,6 +989,106 @@ app.post('/api/extract-personal-data', async (req, res) => {
 });
 
 // New endpoint to discover available locations from RMV URL
+// Retry logic with browser restart capability
+async function discoverLocationsWithRetry(rmvUrl, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            logger.info(`🔍 Location discovery attempt ${attempt}/${maxRetries} for URL...`);
+            
+            // Initialize browser if needed
+            if (!service.scraper.browser) {
+                await service.scraper.initialize();
+            }
+
+            const page = await service.scraper.browser.newPage();
+            
+            try {
+                // Set user agent to avoid detection
+                await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                
+                // Navigate to RMV page
+                await page.goto(rmvUrl, { 
+                    waitUntil: 'domcontentloaded',
+                    timeout: 10000 
+                });
+
+                // Extract location data
+                const locationData = await page.evaluate(() => {
+                    const data = { locations: [], offices: [] };
+                    
+                    // Primary method: Extract from window.displayData
+                    if (window.displayData && Array.isArray(window.displayData)) {
+                        data.locations = window.displayData.map(location => ({
+                            id: location.Id,
+                            name: location.Name,
+                            displayName: location.DisplayName || location.Name,
+                            address: location.Address,
+                            latitude: location.Latitude,
+                            longitude: location.Longitude
+                        }));
+                    }
+                    
+                    // Secondary method: Extract from DOM buttons
+                    const qflowButtons = document.querySelectorAll('.QflowObjectItem[data-id]');
+                    qflowButtons.forEach(button => {
+                        const nameElement = button.querySelector('h3, .office-name, [class*="name"]');
+                        const addressElement = button.querySelector('p, .office-address, [class*="address"]');
+                        
+                        if (nameElement) {
+                            data.offices.push({
+                                id: button.getAttribute('data-id'),
+                                name: nameElement.textContent?.trim() || 'Unknown Location',
+                                address: addressElement?.textContent?.trim() || 'Address not available'
+                            });
+                        }
+                    });
+                    
+                    return data;
+                });
+
+                await page.close();
+                return locationData;
+                
+            } catch (pageError) {
+                await page.close();
+                throw pageError;
+            }
+            
+        } catch (error) {
+            logger.warn(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+            
+            if (attempt === maxRetries) {
+                throw error;
+            }
+            
+            // Check if we need to restart browser
+            const needsBrowserRestart = 
+                error.message.includes('Execution context was destroyed') ||
+                error.message.includes('Target closed') ||
+                error.message.includes('Target.createTarget timed out') ||
+                error.message.includes('Protocol error');
+                
+            if (needsBrowserRestart) {
+                logger.info('🔄 Browser restart needed, reinitializing...');
+                try {
+                    if (service.scraper.browser) {
+                        await service.scraper.browser.close();
+                        service.scraper.browser = null;
+                    }
+                    await service.scraper.initialize();
+                } catch (restartError) {
+                    logger.error('❌ Browser restart failed:', restartError.message);
+                }
+            }
+            
+            // Progressive backoff: 2s, 4s, 8s
+            const delay = 2000 * attempt;
+            logger.info(`⏱️ Waiting ${delay}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
 app.post('/api/discover-locations', async (req, res) => {
     const startTime = Date.now();
     
@@ -1011,88 +1111,25 @@ app.post('/api/discover-locations', async (req, res) => {
 
         logger.info('🔍 Starting location discovery from RMV URL...');
 
-        // Initialize browser if needed
-        if (!service.scraper.browser) {
-            await service.scraper.initialize();
-        }
+        const locationData = await discoverLocationsWithRetry(rmvUrl);
 
-        const page = await service.scraper.browser.newPage();
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        
+        logger.info(`✅ Location discovery completed in ${duration}s:`, {
+            hasDisplayData: true,
+            locationsFound: locationData.locations.length,
+            officesFound: locationData.offices.length
+        });
 
-        try {
-            // Set user agent to avoid detection
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-            
-            // Navigate to RMV URL
-            await page.goto(rmvUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-            await page.waitForTimeout(3000);
-            
-            // Extract location data from the page
-            const locationData = await page.evaluate(() => {
-                const data = {
-                    locations: [],
-                    offices: [],
-                    pageTitle: document.title,
-                    debugInfo: {
-                        hasDisplayData: typeof window.displayData !== 'undefined',
-                        displayDataLength: window.displayData?.length || 0
-                    }
-                };
-                
-                // Extract structured location data from window.displayData
-                if (window.displayData && Array.isArray(window.displayData)) {
-                    data.locations = window.displayData.map(location => ({
-                        id: location.Id,
-                        name: location.Name,
-                        address: location.Address,
-                        latitude: location.Latitude,
-                        longitude: location.Longitude,
-                        workingHours: location.InfoPageWorkingHours,
-                        displayText: location.DisplayText
-                    }));
-                }
-                
-                // Also extract office buttons from the DOM
-                const qflowButtons = document.querySelectorAll('.QflowObjectItem[data-id]');
-                qflowButtons.forEach(btn => {
-                    const officeName = btn.textContent.split('\n')[0].trim();
-                    const dataId = btn.getAttribute('data-id');
-                    const fullText = btn.textContent.trim();
-                    
-                    if (officeName && dataId) {
-                        data.offices.push({
-                            name: officeName,
-                            id: dataId,
-                            fullText: fullText,
-                            displayName: officeName // Clean name for UI
-                        });
-                    }
-                });
-                
-                return data;
-            });
-
-            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-            
-            logger.info(`✅ Location discovery completed in ${duration}s:`, {
-                locationsFound: locationData.locations.length,
-                officesFound: locationData.offices.length,
-                hasDisplayData: locationData.debugInfo.hasDisplayData
-            });
-
-            // Return the discovered locations
-            res.json({
-                success: true,
-                locations: locationData.locations,
-                offices: locationData.offices,
-                totalFound: locationData.locations.length || locationData.offices.length,
-                duration: duration,
-                debugInfo: locationData.debugInfo,
-                message: `Found ${locationData.locations.length || locationData.offices.length} available locations`
-            });
-
-        } finally {
-            await page.close();
-        }
+        // Return the discovered locations
+        res.json({
+            success: true,
+            locations: locationData.locations,
+            offices: locationData.offices,
+            totalFound: locationData.locations.length || locationData.offices.length,
+            duration: duration,
+            message: `Found ${locationData.locations.length || locationData.offices.length} available locations`
+        });
 
     } catch (error) {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -1522,6 +1559,66 @@ app.post('/api/clear-sessions', (req, res) => {
         success: true,
         message: `Cleared ${clearedCount} monitoring sessions`
     });
+});
+
+// Health check endpoint for production monitoring
+app.get('/api/health', async (req, res) => {
+    const startTime = Date.now();
+    let puppeteerHealthy = false;
+    let error = null;
+    
+    try {
+        // Test browser connectivity
+        if (!service.scraper.browser) {
+            await service.scraper.initialize();
+        }
+        
+        const page = await service.scraper.browser.newPage();
+        await page.goto('about:blank', { timeout: 5000 });
+        await page.close();
+        
+        puppeteerHealthy = true;
+        
+    } catch (e) {
+        error = e.message;
+        logger.warn(`⚠️ Health check failed: ${error}`);
+        
+        // Try to restart browser if unhealthy
+        try {
+            if (service.scraper.browser) {
+                await service.scraper.browser.close();
+                service.scraper.browser = null;
+            }
+            await service.scraper.initialize();
+            logger.info('🔄 Browser restarted during health check');
+        } catch (restartError) {
+            logger.error('❌ Browser restart failed during health check:', restartError.message);
+        }
+    }
+    
+    const responseTime = Date.now() - startTime;
+    const isHealthy = puppeteerHealthy;
+    
+    if (isHealthy) {
+        res.json({
+            status: 'healthy',
+            puppeteer: 'ok',
+            responseTime: `${responseTime}ms`,
+            activeSessions: activeMonitoringSessions.size,
+            uptime: process.uptime(),
+            timestamp: new Date().toISOString()
+        });
+    } else {
+        res.status(503).json({
+            status: 'unhealthy',
+            puppeteer: 'failed',
+            error: error,
+            responseTime: `${responseTime}ms`,
+            activeSessions: activeMonitoringSessions.size,
+            uptime: process.uptime(),
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 // Get monitoring status

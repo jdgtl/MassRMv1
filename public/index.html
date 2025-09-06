@@ -1584,36 +1584,37 @@
         // Store discovered locations from RMV URL
         let discoveredLocations = null;
         let isUsingDynamicLocations = false;
+        
+        // Original service centers - restored to working state
         let originalServiceCenters = [
             { name: 'Attleboro', address: '75 Park Street, Attleboro MA, 02703', lat: 41.9445, lng: -71.2856 },
             { name: 'Braintree', address: '10 Plain Street, Braintree MA, 02184', lat: 42.2057, lng: -70.9995 },
             { name: 'Brockton', address: '490 Forest Avenue, Brockton MA, 02301', lat: 42.0834, lng: -71.0184 },
-            { name: 'Danvers', address: '8 Newbury Street, Danvers MA, 01923', lat: 42.5751, lng: -70.9301 },
-            { name: 'Easthampton', address: '116 Pleasant St, East Hampton MA, 01027', lat: 42.2667, lng: -72.6687 },
-            { name: 'Fall River', address: '1794 North Main Street, Fall River MA, 02720', lat: 41.7015, lng: -71.1550 },
-            { name: 'Greenfield', address: '18 Miner Street, Greenfield MA, 01301', lat: 42.5876, lng: -72.6001 },
-            { name: 'Haverhill', address: '229C Lincoln Avenue, Haverhill MA, 01830', lat: 42.7762, lng: -71.0773 },
-            { name: 'Lawrence', address: '73C Winthrop Avenue, Lawrence MA, 01843', lat: 42.7070, lng: -71.1631 },
-            { name: 'Leominster', address: '500 Research Drive, Leominster MA, 01453', lat: 42.5251, lng: -71.7612 },
-            { name: 'Lowell', address: '77 Middlesex Street, Lowell MA, 01852', lat: 42.6334, lng: -71.3162 },
-            { name: 'Martha\'s Vineyard', address: '11A Street, Martha\'s Vineyard/Edgertown MA, 02539', lat: 41.3890, lng: -70.5138 },
-            { name: 'Milford', address: '138 South Main Street, Milford MA, 01757', lat: 42.1598, lng: -71.5201 },
-            { name: 'Nantucket', address: '16 Broad Street, Nantucket MA, 02554', lat: 41.2835, lng: -70.0995 },
-            { name: 'New Bedford', address: '212 Theodore Rice Blvd, New Bedford MA, 02740', lat: 41.6362, lng: -70.9342 },
-            { name: 'North Adams', address: '33 Main Street, North Adams MA, 01247', lat: 42.7001, lng: -73.1087 },
-            { name: 'Pittsfield', address: '333 East Street, Pittsfield MA, 01201', lat: 42.4501, lng: -73.2451 },
-            { name: 'Plymouth', address: '40 Industrial Park, Plymouth MA, 02360', lat: 41.9584, lng: -70.6673 },
-            { name: 'South Yarmouth', address: '1084 Route 28, South Yarmouth, MA 02664', lat: 41.6707, lng: -70.1995 },
-            { name: 'Southbridge', address: '6 Larochelle Way, Southbridge MA, 01550', lat: 42.0751, lng: -72.0334 },
-            { name: 'Springfield', address: '1250 St. James Avenue, Springfield MA, 01104', lat: 42.1015, lng: -72.5898 },
-            { name: 'Taunton', address: '1 Washington Street, Suite 40, Taunton MA, 02780', lat: 41.9001, lng: -71.0897 },
-            { name: 'Watertown', address: '550 Arsenal Street, Watertown MA, 02472', lat: 42.3584, lng: -71.1828 },
-            { name: 'Wilmington', address: '355 Middlesex Avenue, Wilmington MA, 01887', lat: 42.5584, lng: -71.1737 },
-            { name: 'Worcester', address: '50 SW Cutoff, Worcester MA, 16034', lat: 42.2626, lng: -71.8023 }
+            { name: 'Cambridge', address: '200 Portland Street, Cambridge MA, 02139', lat: 42.3601, lng: -71.0589 },
+            { name: 'Chicopee', address: '200 Burnett Road, Chicopee MA, 01020', lat: 42.1487, lng: -72.5761 },
+            { name: 'Fall River', address: '718 Pleasant Street, Fall River MA, 02723', lat: 41.7015, lng: -71.1550 },
+            { name: 'Greenfield', address: '51 High Street, Greenfield MA, 01301', lat: 42.5876, lng: -72.5993 },
+            { name: 'Haverhill', address: '439 Primrose Street, Haverhill MA, 01830', lat: 42.7762, lng: -71.0773 },
+            { name: 'Lawrence', address: '73 Winthrop Avenue, Lawrence MA, 01843', lat: 42.7070, lng: -71.1631 },
+            { name: 'Leominster', address: '99 Main Street, Leominster MA, 01453', lat: 42.5251, lng: -71.7612 },
+            { name: 'Lowell', address: '1313 Lakeview Avenue, Lowell MA, 01854', lat: 42.6334, lng: -71.3162 },
+            { name: 'Lynn', address: '426 Lynnway, Lynn MA, 01901', lat: 42.4668, lng: -70.9495 },
+            { name: 'Martha\'s Vineyard', address: '71 Hillman Drive, Edgartown MA, 02539', lat: 41.3890, lng: -70.5138 },
+            { name: 'Nantucket', address: '16 Cherokee Drive, Nantucket MA, 02554', lat: 41.2835, lng: -70.0995 },
+            { name: 'New Bedford', address: '136 Union Street, New Bedford MA, 02740', lat: 41.6362, lng: -70.9342 },
+            { name: 'North Adams', address: '80 Summer Street, North Adams MA, 01247', lat: 42.7009, lng: -73.1084 },
+            { name: 'Pittsfield', address: '124 County Road, Pittsfield MA, 01201', lat: 42.4501, lng: -73.2453 },
+            { name: 'Plymouth', address: '50 Industrial Park Road, Plymouth MA, 02360', lat: 41.9584, lng: -70.6673 },
+            { name: 'Quincy', address: '36 Miller Stile Road, Quincy MA, 02169', lat: 42.2529, lng: -71.0275 },
+            { name: 'Revere', address: '1206 North Shore Road, Revere MA, 02151', lat: 42.4085, lng: -70.9924 },
+            { name: 'South Yarmouth', address: '372 North Main Street, South Yarmouth MA, 02664', lat: 41.6648, lng: -70.1978 },
+            { name: 'Springfield', address: '1350 Liberty Street, Springfield MA, 01104', lat: 42.1015, lng: -72.5898 },
+            { name: 'Watertown', address: '485 Arsenal Street, Watertown MA, 02472', lat: 42.3648, lng: -71.1676 },
+            { name: 'Worcester', address: '91 Prescott Street, Worcester MA, 01605', lat: 42.2626, lng: -71.8023 }
         ];
         
-        // Initialize serviceCenters with original data
-        let serviceCenters = [...originalServiceCenters];
+        // Initialize serviceCenters as empty - require dynamic discovery
+        let serviceCenters = [];
 
         // Dynamic Regional groupings - updated based on current serviceCenters
         let regions = {
@@ -1706,6 +1707,14 @@
             // Log the updated regional mappings
             addLog(`🗺️ Updated regional mappings: ${Object.entries(regions).map(([region, locations]) => 
                 `${region}(${locations.length})`).join(', ')}`, 'info');
+        }
+
+        // Function to clear regional mappings
+        function clearRegionalMappings() {
+            Object.keys(regions).forEach(key => {
+                regions[key] = [];
+            });
+            addLog('🗺️ Regional mappings cleared', 'info');
         }
 
         // ZIP code to coordinates mapping (expanded Massachusetts coverage)
@@ -1918,9 +1927,11 @@
             // Add event listener to RMV URL field for dynamic location discovery
             const rmvUrlField = document.getElementById('rmvUrl');
             if (rmvUrlField) {
-                rmvUrlField.addEventListener('blur', discoverLocationsFromUrl);
-                rmvUrlField.addEventListener('change', discoverLocationsFromUrl);
-                console.log('Added location discovery listeners to RMV URL field');
+                // Use input event for real-time discovery as URL is entered/pasted
+                rmvUrlField.addEventListener('input', () => {
+                    setTimeout(discoverLocationsFromUrl, 500); // Delay to avoid multiple rapid calls
+                });
+                console.log('Added location discovery listener to RMV URL field (input)');
             }
             if (connectBtn) {
                 connectBtn.addEventListener('click', connectToRMV);
@@ -3924,19 +3935,36 @@
         }
         
         // Dynamic Location Discovery Functions
+        let isDiscovering = false; // Prevent duplicate concurrent requests
+        let discoveryTimeoutId = null;
+        
         async function discoverLocationsFromUrl() {
             const rmvUrl = document.getElementById('rmvUrl').value;
             
+            // Clear any existing timeout
+            if (discoveryTimeoutId) {
+                clearTimeout(discoveryTimeoutId);
+                discoveryTimeoutId = null;
+            }
+            
+            // Prevent duplicate concurrent requests
+            if (isDiscovering) {
+                console.log('⚠️ Discovery already in progress, skipping...');
+                return;
+            }
+            
+            console.log('🔍 Starting location discovery for URL:', rmvUrl);
+            
             if (!rmvUrl || !rmvUrl.includes('rmvmassdotappt.cxmflow.com')) {
-                // If URL is cleared or invalid, revert to default locations
+                // If URL is cleared or invalid, clear locations and require discovery
                 if (isUsingDynamicLocations) {
-                    addLog('Reverted to default locations', 'info');
-                    serviceCenters = [...originalServiceCenters];
+                    addLog('⚠️ RMV URL cleared. Please enter a valid RMV URL to discover available locations.', 'warning');
+                    serviceCenters = [];
                     populateServiceCenters();
                     isUsingDynamicLocations = false;
                     
-                    // Reset regional mappings to default
-                    updateRegionalMappings();
+                    // Clear regional mappings
+                    clearRegionalMappings();
                     
                     // Re-enable distance sorting if ZIP was entered
                     if (userZipCoords) {
@@ -3946,7 +3974,17 @@
                 return;
             }
             
+            isDiscovering = true; // Set flag to prevent duplicates
             addLog('🔍 Discovering available locations from RMV URL...', 'info');
+            
+            // Add timeout to prevent stuck flag (10 seconds max)
+            discoveryTimeoutId = setTimeout(() => {
+                if (isDiscovering) {
+                    console.log('⚠️ Discovery timeout - clearing stuck flag');
+                    isDiscovering = false;
+                    addLog('⚠️ Location discovery timed out. Please try again.', 'warning');
+                }
+            }, 10000);
             
             try {
                 const response = await fetch('/api/discover-locations', {
@@ -3957,23 +3995,26 @@
                     body: JSON.stringify({ rmvUrl })
                 });
                 
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
+                console.log('🔍 Discovery response:', data);
                 
                 if (data.success && data.totalFound > 0) {
                     // Convert discovered locations to the format expected by this advanced UI
                     const locationObjects = data.locations.length > 0 ? data.locations : data.offices;
                     
                     const discoveredServiceCenters = locationObjects.map(loc => {
-                        // Try to find matching coordinates from originalServiceCenters
-                        const existingCenter = originalServiceCenters.find(center => 
-                            center.name.toLowerCase() === (loc.name || loc.displayName).toLowerCase()
-                        );
+                        // Use discovered location data directly
                         
                         return {
                             name: loc.name || loc.displayName,
-                            address: loc.address || existingCenter?.address || 'Address not available',
-                            lat: parseFloat(loc.latitude) || existingCenter?.lat || 42.3601, // Default to Boston coords
-                            lng: parseFloat(loc.longitude) || existingCenter?.lng || -71.0589
+                            address: loc.address || 'Address not available',
+                            lat: parseFloat(loc.latitude) || 42.3601, // Default to Boston coords if not provided
+                            lng: parseFloat(loc.longitude) || -71.0589
                         };
                     });
                     
@@ -4006,22 +4047,31 @@
                     addLog('📋 Location list updated with actual RMV locations', 'info');
                     
                 } else if (data.success && data.totalFound === 0) {
-                    addLog('⚠️ No locations found in RMV URL. Using default locations.', 'warning');
-                    serviceCenters = [...originalServiceCenters];
+                    addLog('❌ No locations found in RMV URL. Please check your URL or try a different appointment type.', 'error');
+                    serviceCenters = [];
                     populateServiceCenters();
                     isUsingDynamicLocations = false;
                 } else {
                     addLog('❌ Failed to discover locations: ' + (data.error || 'Unknown error'), 'error');
-                    serviceCenters = [...originalServiceCenters];
+                    addLog('⚠️ Please check your RMV URL and try again. Location discovery is required.', 'error');
+                    serviceCenters = [];
                     populateServiceCenters();
                     isUsingDynamicLocations = false;
                 }
                 
             } catch (error) {
                 addLog('❌ Error discovering locations: ' + error.message, 'error');
-                serviceCenters = [...originalServiceCenters];
+                addLog('⚠️ Please check your RMV URL and try again. Location discovery is required.', 'error');
+                serviceCenters = [];
                 populateServiceCenters();
                 isUsingDynamicLocations = false;
+            } finally {
+                if (discoveryTimeoutId) {
+                    clearTimeout(discoveryTimeoutId); // Clear the timeout since we're finishing
+                    discoveryTimeoutId = null;
+                }
+                isDiscovering = false; // Clear flag in both success and error cases
+                console.log('✅ Discovery flag cleared, isDiscovering =', isDiscovering);
             }
         }
         

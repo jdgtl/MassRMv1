@@ -78,17 +78,22 @@ open http://localhost:3000
 - **Browser Push**: Instant desktop notifications
 - **Webhook**: Custom integrations with external systems
 
-### 📊 Live Monitoring Dashboard
-- **Dual View System**: List view + full-width calendar view with seamless toggle
-- **Calendar Integration**: Monthly calendar with green highlighting for preferred appointments
-- **Enhanced Navigation**: Large 50×50px calendar navigation buttons for easy clicking
-- **Modal Popups**: Click calendar days to see appointment details with clean location/address separation
-- **Smart Month Display**: Calendar starts with user's preferred month or first appointment month
-- **Visual Hierarchy**: Subtle background colors for non-preferred appointment days
-- **Real-time Status**: Visual indicators for all system components
-- **Performance Metrics**: Fast 6-8 second appointment checking, success rates, response times
-- **User-Friendly Activity Logs**: Smart filtering shows only relevant information with context
-- **Universal Loading States**: Spinners work across both calendar and list views
+### 📊 Progressive Disclosure Monitoring Interface
+- **🎯 Clean Start State**: Only Start Monitoring button visible initially - no visual clutter
+- **🛡️ Smart Overlay System**: Absolute positioning blocks tab content until monitoring begins
+- **🔄 Dynamic Flow Transition**: Switches from overlay to normal flow after first monitoring session
+- **📱 Contextual Messaging**: Different instructions for initial start vs resume monitoring
+- **👁️ Intelligent Tab Management**: Tabs disabled initially, enabled permanently after first use
+- **📅 Dual View System**: List view + full-width calendar view with seamless toggle
+- **🗓️ Calendar Integration**: Monthly calendar with green highlighting for preferred appointments
+- **🎨 Enhanced Navigation**: Large 50×50px calendar navigation buttons for easy clicking
+- **📋 Modal Popups**: Click calendar days to see appointment details with clean location/address separation
+- **📍 Smart Month Display**: Calendar starts with user's preferred month or first appointment month
+- **🎨 Visual Hierarchy**: Subtle background colors for non-preferred appointment days
+- **⚡ Real-time Status**: Visual indicators for all system components
+- **📊 Performance Metrics**: Fast 6-8 second appointment checking, success rates, response times
+- **📝 User-Friendly Activity Logs**: Smart filtering shows only relevant information with context
+- **🔄 Universal Loading States**: Spinners work across both calendar and list views
 
 ## 🏗️ Technical Architecture
 
@@ -97,8 +102,8 @@ open http://localhost:3000
 Section 1: RMV Account Connection
 Section 2: Service Center Selection  
 Section 3: Time Preferences
-Section 4: Notification Settings + Monitoring Controls
-Section 5: Live Appointment Results
+Section 4: Notification Settings
+Section 5: Progressive Disclosure Monitoring Interface with Smart Overlay
 Section 6: Statistics Dashboard
 Section 7: Activity Logs
 ```

@@ -40,6 +40,59 @@
    git commit -m "working state - [feature description]"
    ```
 
+## 🎨 Technical Implementation: Progressive Disclosure UI
+
+### Section 5 Smart Overlay System
+```javascript
+// State management for overlay behavior
+let hasEverStartedMonitoring = false; // Track if monitoring has ever been started
+
+// Initial state - absolute positioned overlay
+<div class="main-content-area" id="mainContentArea" style="position: relative; min-height: 300px;">
+    <div class="start-monitoring-section" id="startMonitoringSection" 
+         style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; ...">
+        <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
+        <h3>Ready to Start Monitoring</h3>
+        <p>Once appointments are found, you can switch between calendar and list view using the buttons above</p>
+        <button onclick="startMonitoring()">Start Monitoring</button>
+    </div>
+</div>
+```
+
+### Smart Positioning Logic
+```javascript
+// On start monitoring - remove overlay permanently
+async function startMonitoring() {
+    hasEverStartedMonitoring = true;
+    
+    if (startMonitoringSection) {
+        startMonitoringSection.style.position = 'static'; // Remove overlay
+        startMonitoringSection.style.display = 'none';   // Hide for loading
+    }
+    // ... rest of monitoring logic
+}
+
+// On stop monitoring - keep normal flow (no overlay restoration)
+async function stopMonitoring() {
+    if (startMonitoringSection) {
+        startMonitoringSection.style.position = 'static'; // Keep normal flow
+        startMonitoringSection.style.display = 'block';   // Show in normal position
+    }
+    
+    // Keep tabs enabled since monitoring has been used
+    if (viewToggleContainer) {
+        viewToggleContainer.style.opacity = '1';
+        viewToggleContainer.style.pointerEvents = 'auto';
+    }
+}
+```
+
+### UX Flow States
+1. **Virgin State** (page load): Absolute overlay blocks everything
+2. **First Monitoring**: Overlay removed → loading → results → stop (normal flow)
+3. **Subsequent Cycles**: Always normal flow positioning
+4. **Page Refresh**: Back to virgin state with overlay
+
 ## 🗺️ Technical Implementation: Dynamic Location Discovery
 
 ### Backend API (`/api/discover-locations`)
@@ -119,8 +172,12 @@ git show HEAD~1:filename.js
 1. **Section 1**: RMV URL + ZIP → Personal data extraction
 2. **Section 2**: Service center selection (max 8)
 3. **Section 3**: Time preferences (date/time sliders)
-4. **Section 4**: Notifications + Monitoring controls
-5. **Section 5**: Live appointment results
+4. **Section 4**: Notifications settings
+5. **Section 5**: Progressive Disclosure Monitoring Interface
+   - **Initial State**: Absolute positioned overlay with Start Monitoring button
+   - **Loading State**: Spinner with "Searching for Appointments" message
+   - **Active State**: Normal flow with tabs enabled and results displayed
+   - **Stopped State**: Smart positioning (overlay for first-time, normal flow after)
 6. **Section 6**: Statistics dashboard
 7. **Section 7**: Activity logs
 

@@ -1467,10 +1467,6 @@
                                 <p>Click "Start Monitoring" above to begin searching for appointments</p>
                             </div>
                         </div>
-                        <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
-                            <div class="loading-spinner"></div>
-                            <p>Searching for appointments...</p>
-                        </div>
                         <div id="appointmentsList" style="display: none;">
                             <!-- Appointments will be populated here by JavaScript -->
                         </div>
@@ -1488,11 +1484,6 @@
                         </div>
                     </div>
 
-                    <!-- Calendar loading state -->
-                    <div class="appointments-loading" id="calendarLoading" style="display: none;">
-                        <div class="loading-spinner"></div>
-                        <p>Searching for appointments...</p>
-                    </div>
 
                     <!-- Calendar content -->
                     <div id="calendarView" style="display: none;">
@@ -2491,12 +2482,9 @@
             const calendarInactiveEl = document.getElementById('calendarInactive');
             if (calendarInactiveEl) calendarInactiveEl.style.display = 'none';
             
-            // Show loading states
+            // Show loading states (single unified loading element)
             const loadingEl = document.getElementById('appointmentsLoading');
             if (loadingEl) loadingEl.style.display = 'block';
-            
-            const calendarLoadingEl = document.getElementById('calendarLoading');
-            if (calendarLoadingEl) calendarLoadingEl.style.display = 'block';
             
             // Hide content views
             const listEl = document.getElementById('appointmentsList');
@@ -2510,9 +2498,6 @@
             // Hide loading states
             const loadingEl = document.getElementById('appointmentsLoading');
             if (loadingEl) loadingEl.style.display = 'none';
-            
-            const calendarLoadingEl = document.getElementById('calendarLoading');
-            if (calendarLoadingEl) calendarLoadingEl.style.display = 'none';
         }
 
         function showAppointmentResults() {
@@ -3927,12 +3912,10 @@
         }
 
         function updateLoadingStatesForCurrentView() {
-            // Check if monitoring is currently active by looking for loading states
-            const listLoading = document.getElementById('appointmentsLoading');
-            const calendarLoading = document.getElementById('calendarLoading');
+            // Check if monitoring is currently active by looking for loading state
+            const mainLoading = document.getElementById('appointmentsLoading');
             
-            const isMonitoringActive = (listLoading && listLoading.style.display === 'block') || 
-                                     (calendarLoading && calendarLoading.style.display === 'block');
+            const isMonitoringActive = mainLoading && mainLoading.style.display === 'block';
             
             if (isMonitoringActive) {
                 // If monitoring is active, show loading states for both views

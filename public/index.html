@@ -1581,8 +1581,8 @@
         // Initialize serviceCenters with original data
         let serviceCenters = [...originalServiceCenters];
 
-        // Regional groupings
-        const regions = {
+        // Dynamic Regional groupings - updated based on current serviceCenters
+        let regions = {
             boston: ['Watertown', 'Braintree'],
             worcester: ['Worcester', 'Milford', 'Leominster', 'Southbridge'],
             springfield: ['Springfield', 'Easthampton', 'Pittsfield', 'North Adams', 'Greenfield'],
@@ -1590,6 +1590,89 @@
             south: ['Brockton', 'Taunton', 'Fall River', 'Attleboro', 'New Bedford', 'Plymouth', 'South Yarmouth'],
             islands: ['Martha\'s Vineyard', 'Nantucket']
         };
+
+        // Function to dynamically map locations to regions based on coordinates
+        function updateRegionalMappings() {
+            const currentLocationNames = serviceCenters.map(center => center.name || center);
+            
+            // Reset regions to empty arrays
+            Object.keys(regions).forEach(key => {
+                regions[key] = [];
+            });
+            
+            // Map each location to appropriate region based on coordinates and name
+            currentLocationNames.forEach(locationName => {
+                const locationObj = serviceCenters.find(center => 
+                    (center.name || center) === locationName
+                );
+                const coords = locationObj?.lat !== undefined ? locationObj : null;
+                
+                // Geographic region assignment based on coordinates and city names
+                if (coords) {
+                    const lat = coords.lat;
+                    const lng = coords.lng;
+                    
+                    // PRIORITY CHECK: Islands (check first before geographic bounds)
+                    if (locationName.match(/Martha.*Vineyard|Nantucket/i)) {
+                        regions.islands.push(locationName);
+                    }
+                    // Boston Metro (within ~25 miles of Boston)
+                    else if ((lat >= 42.1 && lat <= 42.6 && lng >= -71.3 && lng <= -70.8) ||
+                        locationName.match(/Boston|Cambridge|Watertown|Braintree|Quincy|Newton/i)) {
+                        regions.boston.push(locationName);
+                    }
+                    // North Shore (north of Boston, closer to coast)
+                    else if ((lat >= 42.4 && lng >= -71.2) ||
+                        locationName.match(/Danvers|Lawrence|Haverhill|Lowell|Wilmington|Lynn|Salem|Peabody|Methuen|Everett/i)) {
+                        regions.north.push(locationName);
+                    }
+                    // South Shore (south of Boston, but exclude islands)
+                    else if ((lat <= 42.2 && lng >= -71.2 && !locationName.match(/Martha.*Vineyard|Nantucket/i)) ||
+                        locationName.match(/Brockton|Taunton|Fall River|Attleboro|New Bedford|Plymouth|South Yarmouth/i)) {
+                        regions.south.push(locationName);
+                    }
+                    // Central MA (Worcester area)
+                    else if ((lng >= -72.1 && lng <= -71.4) ||
+                        locationName.match(/Worcester|Milford|Leominster|Southbridge|Fitchburg|Framingham/i)) {
+                        regions.worcester.push(locationName);
+                    }
+                    // Western MA (Springfield and west)
+                    else if (lng < -72.1 ||
+                        locationName.match(/Springfield|Easthampton|Pittsfield|North Adams|Greenfield|Holyoke/i)) {
+                        regions.springfield.push(locationName);
+                    }
+                    // Default to most appropriate region based on coordinates
+                    else {
+                        if (lat >= 42.4) regions.north.push(locationName);
+                        else if (lat <= 42.0) regions.south.push(locationName);
+                        else if (lng <= -72.0) regions.springfield.push(locationName);
+                        else regions.worcester.push(locationName);
+                    }
+                } else {
+                    // Fallback for locations without coordinates - use name matching
+                    if (locationName.match(/Boston|Cambridge|Watertown|Braintree|Quincy|Newton/i)) {
+                        regions.boston.push(locationName);
+                    } else if (locationName.match(/Danvers|Lawrence|Haverhill|Lowell|Wilmington|Lynn|Salem/i)) {
+                        regions.north.push(locationName);
+                    } else if (locationName.match(/Brockton|Taunton|Fall River|Attleboro|New Bedford|Plymouth/i)) {
+                        regions.south.push(locationName);
+                    } else if (locationName.match(/Worcester|Milford|Leominster|Southbridge|Fitchburg/i)) {
+                        regions.worcester.push(locationName);
+                    } else if (locationName.match(/Springfield|Easthampton|Pittsfield|North Adams|Greenfield/i)) {
+                        regions.springfield.push(locationName);
+                    } else if (locationName.match(/Martha.*Vineyard|Nantucket/i)) {
+                        regions.islands.push(locationName);
+                    } else {
+                        // Default assignment to Central MA for unknown locations
+                        regions.worcester.push(locationName);
+                    }
+                }
+            });
+            
+            // Log the updated regional mappings
+            addLog(`🗺️ Updated regional mappings: ${Object.entries(regions).map(([region, locations]) => 
+                `${region}(${locations.length})`).join(', ')}`, 'info');
+        }
 
         // ZIP code to coordinates mapping (expanded Massachusetts coverage)
         const zipCoords = {
@@ -1820,6 +1903,10 @@
             
             // Initially populate service centers alphabetically
             populateServiceCenters();
+            
+            // Initialize regional mappings with default locations
+            updateRegionalMappings();
+            
             // Disable distance sorting initially (no ZIP entered)
             const distanceSort = document.getElementById('sortDistance');
             if (distanceSort) {
@@ -2008,7 +2095,7 @@
             }
         }
 
-        // Regional selection
+        // Regional selection with replacement logic
         function selectRegion(regionKey) {
             const regionButton = event.target;
             
@@ -2023,9 +2110,9 @@
                 });
                 addLog('Cleared all service center selections', 'info');
             } else if (regions[regionKey]) {
-                // Toggle region
+                // Check if this region is already active
                 if (activeRegions.has(regionKey)) {
-                    // Deactivate region
+                    // Deactivate current region
                     activeRegions.delete(regionKey);
                     regionButton.classList.remove('active');
                     regions[regionKey].forEach(centerName => {
@@ -2037,15 +2124,32 @@
                     });
                     addLog(`Deselected ${regions[regionKey].length} centers in ${regionKey} region`, 'info');
                 } else {
-                    // Activate region - check maximum limit
-                    const regionCenters = regions[regionKey];
-                    const newTotalCount = selectedCenters.size + regionCenters.length;
+                    // NEW REGION REPLACEMENT LOGIC:
+                    // Clear all previously selected regions and centers first
+                    const previouslyActiveRegions = Array.from(activeRegions);
                     
-                    if (newTotalCount > 8) {
-                        alert(`Maximum 8 locations selected. Cannot select ${regionCenters.length} locations in this region. Currently selected: ${selectedCenters.size}`);
+                    // Clear all previous selections
+                    selectedCenters.clear();
+                    activeRegions.clear();
+                    document.querySelectorAll('.service-center').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    document.querySelectorAll('.btn-region:not(.btn-clear)').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Now activate the new region
+                    const regionCenters = regions[regionKey].filter(centerName => {
+                        // Only include centers that actually exist in the current serviceCenters
+                        return serviceCenters.some(center => (center.name || center) === centerName);
+                    });
+                    
+                    if (regionCenters.length === 0) {
+                        addLog(`⚠️ No locations available in ${regionKey} region with current location set`, 'warning');
                         return;
                     }
                     
+                    // Activate the new region
                     activeRegions.add(regionKey);
                     regionButton.classList.add('active');
                     regionCenters.forEach(centerName => {
@@ -2055,7 +2159,12 @@
                             selectedCenters.add(centerName);
                         }
                     });
-                    addLog(`Selected ${regionCenters.length} centers in ${regionKey} region (Total: ${selectedCenters.size}/8)`, 'info');
+                    
+                    if (previouslyActiveRegions.length > 0) {
+                        addLog(`🔄 Replaced ${previouslyActiveRegions.join('/')} region${previouslyActiveRegions.length > 1 ? 's' : ''} with ${regionKey} (${regionCenters.length} locations)`, 'info');
+                    } else {
+                        addLog(`✅ Selected ${regionCenters.length} centers in ${regionKey} region`, 'info');
+                    }
                 }
             }
         }
@@ -3725,6 +3834,9 @@
                     populateServiceCenters();
                     isUsingDynamicLocations = false;
                     
+                    // Reset regional mappings to default
+                    updateRegionalMappings();
+                    
                     // Re-enable distance sorting if ZIP was entered
                     if (userZipCoords) {
                         document.getElementById('sortDistance').disabled = false;
@@ -3772,6 +3884,9 @@
                     // Clear selections and repopulate
                     selectedCenters.clear();
                     populateServiceCenters();
+                    
+                    // Update regional mappings for new locations
+                    updateRegionalMappings();
                     
                     // Update distance calculations if ZIP was entered
                     if (userZipCoords) {

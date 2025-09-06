@@ -1421,7 +1421,7 @@
             <div class="section-header-controls" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <div class="section-instructions" style="flex: 1; margin-right: 20px;">
                     <div class="main-instruction">Monitor appointments and view results in real-time</div>
-                    <div class="sub-instruction" id="monitoringSubInstruction">Start monitoring to automatically check for available appointments every 5 minutes. Results will appear in your preferred view below.</div>
+                    <div class="sub-instruction" id="monitoringSubInstruction">Start monitoring to automatically check for available appointments every 5 minutes.</div>
                 </div>
                 
                 <!-- Tab buttons (initially disabled) -->
@@ -1445,7 +1445,8 @@
                 <div class="start-monitoring-section" id="startMonitoringSection" style="text-align: center; padding: 60px 40px; background: #f8fafc; border-radius: 8px; border: 2px dashed #d1d5db;">
                     <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
                     <h3 style="margin-bottom: 15px; color: #374151;">Ready to Start Monitoring</h3>
-                    <p style="margin-bottom: 25px; color: #6b7280;">Click the button below to begin searching for available appointments</p>
+                    <p style="margin-bottom: 15px; color: #6b7280;">Click the button below to begin searching for available appointments</p>
+                    <p style="margin-bottom: 25px; color: #9ca3af; font-size: 0.9em;">Once appointments are found, you can switch between calendar and list view using the buttons above</p>
                     <button class="btn btn-primary" id="startBtn" onclick="startMonitoring()" style="font-size: 1.1em; padding: 12px 30px;">Start Monitoring</button>
                 </div>
                 
@@ -1462,7 +1463,7 @@
                 <button class="btn btn-danger" onclick="stopMonitoring()" id="stopBtn" style="font-size: 1em; padding: 8px 20px;">Stop Monitoring</button>
             </div>
 
-            <!-- List View Content (hidden initially) -->
+            <!-- List View Content (completely hidden initially) -->
             <div id="listViewContent" style="display: none;">
                 <div id="appointmentsContainer">
                     <div class="appointments-inactive" id="appointmentsInactive">
@@ -1482,8 +1483,8 @@
                 </div>
             </div>
 
-            <!-- Calendar View Content (Default) -->
-            <div id="calendarViewContent" style="display: block;">
+            <!-- Calendar View Content (completely hidden initially) -->
+            <div id="calendarViewContent" style="display: none;">
                 <!-- Calendar inactive state -->
                 <div id="calendarInactive" class="inactive-state">
                     <div style="text-align: center; padding: 40px; color: #6b7280;">

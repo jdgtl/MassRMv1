@@ -1440,9 +1440,9 @@
             </div>
             
             <!-- Main Content Area -->
-            <div class="main-content-area" id="mainContentArea">
-                <!-- Initial State: Start Monitoring Button -->
-                <div class="start-monitoring-section" id="startMonitoringSection" style="text-align: center; padding: 60px 40px; background: #f8fafc; border-radius: 8px; border: 2px dashed #d1d5db;">
+            <div class="main-content-area" id="mainContentArea" style="position: relative; min-height: 300px;">
+                <!-- Initial State: Start Monitoring Button (absolutely positioned to block tabs) -->
+                <div class="start-monitoring-section" id="startMonitoringSection" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; text-align: center; padding: 60px 40px; background: #f8fafc; border-radius: 8px; border: 2px dashed #d1d5db;">
                     <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
                     <h3 style="margin-bottom: 15px; color: #374151;">Ready to Start Monitoring</h3>
                     <p style="margin-bottom: 15px; color: #6b7280;">Click the button below to begin searching for available appointments</p>
@@ -1463,7 +1463,7 @@
                 <button class="btn btn-danger" onclick="stopMonitoring()" id="stopBtn" style="font-size: 1em; padding: 8px 20px;">Stop Monitoring</button>
             </div>
 
-            <!-- List View Content (completely hidden initially) -->
+            <!-- List View Content (blocked by overlay initially) -->
             <div id="listViewContent" style="display: none;">
                 <div id="appointmentsContainer">
                     <div class="appointments-inactive" id="appointmentsInactive">
@@ -1483,8 +1483,8 @@
                 </div>
             </div>
 
-            <!-- Calendar View Content (completely hidden initially) -->
-            <div id="calendarViewContent" style="display: none;">
+            <!-- Calendar View Content (blocked by overlay initially) -->
+            <div id="calendarViewContent" style="display: block;">
                 <!-- Calendar inactive state -->
                 <div id="calendarInactive" class="inactive-state">
                     <div style="text-align: center; padding: 40px; color: #6b7280;">
@@ -2524,8 +2524,11 @@
             const monitorStatus = document.getElementById('monitorStatus');
             const subInstruction = document.getElementById('monitoringSubInstruction');
             
-            // Hide start section, show loading
-            if (startMonitoringSection) startMonitoringSection.style.display = 'none';
+            // Remove absolute positioning and hide start section, show loading
+            if (startMonitoringSection) {
+                startMonitoringSection.style.position = 'static';
+                startMonitoringSection.style.display = 'none';
+            }
             if (appointmentsLoading) appointmentsLoading.style.display = 'block';
             if (stopMonitoringSection) stopMonitoringSection.style.display = 'block';
             
@@ -2681,14 +2684,17 @@
             const listViewContent = document.getElementById('listViewContent');
             const calendarViewContent = document.getElementById('calendarViewContent');
             
-            // Show start monitoring section, hide loading and stop
-            if (startMonitoringSection) startMonitoringSection.style.display = 'block';
+            // Restore absolute positioning and show start monitoring section, hide loading and stop
+            if (startMonitoringSection) {
+                startMonitoringSection.style.position = 'absolute';
+                startMonitoringSection.style.display = 'block';
+            }
             if (appointmentsLoading) appointmentsLoading.style.display = 'none';
             if (stopMonitoringSection) stopMonitoringSection.style.display = 'none';
             
-            // Hide content views
+            // Reset content views to initial state (calendar visible, list hidden but blocked by overlay)
             if (listViewContent) listViewContent.style.display = 'none';
-            if (calendarViewContent) calendarViewContent.style.display = 'none';
+            if (calendarViewContent) calendarViewContent.style.display = 'block';
             
             // Disable tabs again
             if (viewToggleContainer) {

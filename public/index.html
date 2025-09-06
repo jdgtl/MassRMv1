@@ -1349,7 +1349,6 @@
         <div class="card sections-hidden" id="section4">
             <div class="card-header">
                 <h2><span class="section-number">4</span>🔔 Notification Settings</h2>
-                <span class="status-badge status-inactive" id="monitorStatus">INACTIVE</span>
             </div>
 
             <div class="section-instructions">
@@ -1409,17 +1408,24 @@
             </div>
 
 
-            <div style="margin-top: 20px;">
-                <button class="btn btn-primary" id="startBtn" onclick="startMonitoring()">Start Monitoring</button>
-                <button class="btn btn-danger" onclick="stopMonitoring()" style="display: none;" id="stopBtn">Stop Monitoring</button>
-            </div>
         </div>
 
         <!-- Section 5: Available Appointments -->
         <div class="card sections-hidden" id="section5">
             <div class="card-header">
                 <h2><span class="section-number">5</span>📅 Available Appointments</h2>
-                <div class="view-toggle-container" style="display: flex; gap: 5px; align-items: center;">
+                <span class="status-badge status-inactive" id="monitorStatus">INACTIVE</span>
+            </div>
+            
+            <!-- Instructions + Tab Controls in same row -->
+            <div class="section-header-controls" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div class="section-instructions" style="flex: 1; margin-right: 20px;">
+                    <div class="main-instruction">Monitor appointments and view results in real-time</div>
+                    <div class="sub-instruction" id="monitoringSubInstruction">Start monitoring to automatically check for available appointments every 5 minutes. Results will appear in your preferred view below.</div>
+                </div>
+                
+                <!-- Tab buttons (initially disabled) -->
+                <div class="view-toggle-container" style="display: flex; gap: 5px; align-items: center; opacity: 0.5;" id="viewToggleContainer">
                     <button id="listViewBtn" class="view-toggle-btn" onclick="switchToListView()" title="List View">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
@@ -1432,19 +1438,38 @@
                     </button>
                 </div>
             </div>
-            <div class="section-instructions">
-                <div class="main-instruction">Current appointment availability for selected locations</div>
-                <div class="sub-instruction">Appointments matching your preferences are highlighted in green. All other available appointments are shown below. Next check in: <span id="nextCheckCountdown">--</span></div>
+            
+            <!-- Main Content Area -->
+            <div class="main-content-area" id="mainContentArea">
+                <!-- Initial State: Start Monitoring Button -->
+                <div class="start-monitoring-section" id="startMonitoringSection" style="text-align: center; padding: 60px 40px; background: #f8fafc; border-radius: 8px; border: 2px dashed #d1d5db;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
+                    <h3 style="margin-bottom: 15px; color: #374151;">Ready to Start Monitoring</h3>
+                    <p style="margin-bottom: 25px; color: #6b7280;">Click the button below to begin searching for available appointments</p>
+                    <button class="btn btn-primary" id="startBtn" onclick="startMonitoring()" style="font-size: 1.1em; padding: 12px 30px;">Start Monitoring</button>
+                </div>
+                
+                <!-- Loading State (hidden initially) -->
+                <div class="appointments-loading" id="appointmentsLoading" style="display: none; text-align: center; padding: 60px 40px;">
+                    <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                    <h3 style="margin-bottom: 10px; color: #374151;">Searching for Appointments</h3>
+                    <p style="color: #6b7280;">Please wait while we check for available appointments...</p>
+                </div>
             </div>
 
-            <!-- List View Content -->
+            <!-- Stop Monitoring Button (bottom, hidden initially) -->
+            <div class="stop-monitoring-section" id="stopMonitoringSection" style="display: none; text-align: center; margin-top: 20px; padding: 15px; background: #fef2f2; border-radius: 8px;">
+                <button class="btn btn-danger" onclick="stopMonitoring()" id="stopBtn" style="font-size: 1em; padding: 8px 20px;">Stop Monitoring</button>
+            </div>
+
+            <!-- List View Content (hidden initially) -->
             <div id="listViewContent" style="display: none;">
                 <div id="appointmentsContainer">
                     <div class="appointments-inactive" id="appointmentsInactive">
                         <div style="text-align: center; padding: 40px; color: #6b7280;">
                             <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
                             <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
-                            <p>Click "Start Monitoring" in Section 4 to begin searching for appointments</p>
+                            <p>Click "Start Monitoring" above to begin searching for appointments</p>
                         </div>
                     </div>
                     <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
@@ -2490,19 +2515,37 @@
         async function startMonitoring() {
             if (!validateForm()) return;
 
-            // Update UI immediately
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
+            // Update UI immediately - new layout
+            const startMonitoringSection = document.getElementById('startMonitoringSection');
+            const appointmentsLoading = document.getElementById('appointmentsLoading');
+            const stopMonitoringSection = document.getElementById('stopMonitoringSection');
+            const viewToggleContainer = document.getElementById('viewToggleContainer');
             const monitorStatus = document.getElementById('monitorStatus');
+            const subInstruction = document.getElementById('monitoringSubInstruction');
             
-            if (startBtn) startBtn.style.display = 'none';
-            if (stopBtn) stopBtn.style.display = 'inline-block';
+            // Hide start section, show loading
+            if (startMonitoringSection) startMonitoringSection.style.display = 'none';
+            if (appointmentsLoading) appointmentsLoading.style.display = 'block';
+            if (stopMonitoringSection) stopMonitoringSection.style.display = 'block';
+            
+            // Update status badge
             if (monitorStatus) {
                 monitorStatus.textContent = 'ACTIVE';
                 monitorStatus.className = 'status-badge status-active';
             }
             
-            // Show appointments loading state for both views
+            // Update sub-instruction to show monitoring active
+            if (subInstruction) {
+                subInstruction.textContent = 'Monitoring active. Checking for appointments every 5 minutes. Results will appear below when found.';
+            }
+            
+            // Keep tabs disabled during initial search
+            if (viewToggleContainer) {
+                viewToggleContainer.style.opacity = '0.5';
+                viewToggleContainer.style.pointerEvents = 'none';
+            }
+            
+            // Show appointments loading state for both views (existing code)
             showLoadingStates();
 
             const startTime = sliderValueToTime(document.getElementById('startTimeSlider').value);
@@ -2627,26 +2670,40 @@
                 currentMonitoringSessionId = null;
             }
 
-            // Update UI
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
+            // Update UI - NEW LAYOUT
+            const startMonitoringSection = document.getElementById('startMonitoringSection');
+            const appointmentsLoading = document.getElementById('appointmentsLoading');
+            const stopMonitoringSection = document.getElementById('stopMonitoringSection');
+            const viewToggleContainer = document.getElementById('viewToggleContainer');
             const monitorStatus = document.getElementById('monitorStatus');
+            const subInstruction = document.getElementById('monitoringSubInstruction');
+            const listViewContent = document.getElementById('listViewContent');
+            const calendarViewContent = document.getElementById('calendarViewContent');
             
-            if (startBtn) startBtn.style.display = 'inline-block';
-            if (stopBtn) stopBtn.style.display = 'none';
+            // Show start monitoring section, hide loading and stop
+            if (startMonitoringSection) startMonitoringSection.style.display = 'block';
+            if (appointmentsLoading) appointmentsLoading.style.display = 'none';
+            if (stopMonitoringSection) stopMonitoringSection.style.display = 'none';
+            
+            // Hide content views
+            if (listViewContent) listViewContent.style.display = 'none';
+            if (calendarViewContent) calendarViewContent.style.display = 'none';
+            
+            // Disable tabs again
+            if (viewToggleContainer) {
+                viewToggleContainer.style.opacity = '0.5';
+                viewToggleContainer.style.pointerEvents = 'none';
+            }
+            
+            // Reset status badge
             if (monitorStatus) {
                 monitorStatus.textContent = 'INACTIVE';
                 monitorStatus.className = 'status-badge status-inactive';
             }
             
-            // Show appointments inactive state
-            const loadingEl = document.getElementById('appointmentsLoading');
-            if (loadingEl) {
-                loadingEl.style.display = 'none';
-            }
-            const inactiveEl = document.getElementById('appointmentsInactive');
-            if (inactiveEl) {
-                inactiveEl.style.display = 'block';
+            // Reset sub-instruction
+            if (subInstruction) {
+                subInstruction.textContent = 'Start monitoring to automatically check for available appointments every 5 minutes. Results will appear in your preferred view below.';
             }
         }
 
@@ -2880,6 +2937,38 @@
             console.log('📅 Display: Called with appointments:', appointments);
             console.log('📅 Display: Appointments count:', appointments?.length);
             console.log('📅 Display: Sample appointment:', appointments?.[0]);
+            
+            // NEW LAYOUT: Switch from loading to results
+            const appointmentsLoading = document.getElementById('appointmentsLoading');
+            const viewToggleContainer = document.getElementById('viewToggleContainer');
+            const subInstruction = document.getElementById('monitoringSubInstruction');
+            
+            // Hide loading spinner
+            if (appointmentsLoading) appointmentsLoading.style.display = 'none';
+            
+            // Enable tabs and show appropriate view
+            if (viewToggleContainer) {
+                viewToggleContainer.style.opacity = '1';
+                viewToggleContainer.style.pointerEvents = 'auto';
+            }
+            
+            // Update sub-instruction with countdown
+            if (subInstruction) {
+                subInstruction.innerHTML = `Monitoring active. Found <strong>${appointments?.length || 0} appointments</strong>. Next check in: <span id="nextCheckCountdown">--</span>`;
+            }
+            
+            // Show the current active view (calendar is default)
+            const calendarBtn = document.getElementById('calendarViewBtn');
+            const listBtn = document.getElementById('listViewBtn');
+            
+            if (calendarBtn && calendarBtn.classList.contains('active')) {
+                switchToCalendarView();
+            } else if (listBtn && listBtn.classList.contains('active')) {
+                switchToListView();
+            } else {
+                // Default to calendar view
+                switchToCalendarView();
+            }
             
             const container = document.getElementById('appointmentsContainer');
             

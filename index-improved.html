@@ -498,7 +498,7 @@
 
             <div class="section-instructions">
                 <div class="main-instruction">Select which RMV service centers to monitor for available appointments</div>
-                <div class="sub-instruction">Choose multiple locations to increase your chances of finding an appointment. Click on locations to select/deselect them. Selected centers will be highlighted in blue.</div>
+                <div class="sub-instruction">🎯 <strong>Smart Location Discovery:</strong> When you enter an RMV URL above, we'll automatically discover the exact locations available for your appointment type. Otherwise, choose from our default Massachusetts locations. Click on locations to select/deselect them.</div>
             </div>
 
             <div class="service-centers" id="serviceCenters">
@@ -665,8 +665,8 @@
     </div>
 
     <script>
-        // Service Centers Data
-        const serviceCenters = [
+        // Service Centers Data - Now Dynamic!
+        let serviceCenters = [
             'Boston', 'Worcester', 'Springfield', 'Lowell', 'Cambridge',
             'Brockton', 'Quincy', 'Lynn', 'Fall River', 'Newton',
             'Lawrence', 'Somerville', 'Framingham', 'Haverhill', 'Waltham',
@@ -674,6 +674,10 @@
             'Revere', 'Peabody', 'Methuen', 'Everett', 'Salem',
             'Fitchburg', 'Billerica', 'Holyoke', 'Beverly', 'Marlborough'
         ];
+        
+        // Store discovered locations from RMV URL
+        let discoveredLocations = null;
+        let isUsingDynamicLocations = false;
 
         // Time conversion functions (10-minute intervals)
         function sliderValueToTime(value) {
@@ -697,15 +701,13 @@
 
         // Initialize UI
         function initializeUI() {
-            // Populate service centers
-            const centersContainer = document.getElementById('serviceCenters');
-            serviceCenters.forEach(center => {
-                const div = document.createElement('div');
-                div.className = 'service-center';
-                div.textContent = center;
-                div.onclick = () => toggleSelection(div, center);
-                centersContainer.appendChild(div);
-            });
+            // Populate service centers (initially with default list)
+            populateServiceCenters(serviceCenters);
+            
+            // Add event listener to RMV URL field for location discovery
+            const rmvUrlField = document.getElementById('rmvUrl');
+            rmvUrlField.addEventListener('blur', discoverLocationsFromUrl);
+            rmvUrlField.addEventListener('change', discoverLocationsFromUrl);
 
             // Set default dates
             const today = new Date();
@@ -763,6 +765,96 @@
                 selectedCenters.delete(value);
             } else {
                 selectedCenters.add(value);
+            }
+        }
+        
+        // Function to populate service centers dynamically
+        function populateServiceCenters(centers, isDynamic = false) {
+            const centersContainer = document.getElementById('serviceCenters');
+            centersContainer.innerHTML = ''; // Clear existing centers
+            
+            // Clear selections when repopulating
+            selectedCenters.clear();
+            
+            // Add header to show source of locations
+            if (isDynamic) {
+                const header = document.createElement('div');
+                header.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 10px; background: #e8f5e8; border-radius: 8px; margin-bottom: 15px; font-weight: 600; color: #2e7d32;';
+                header.innerHTML = '🎯 Locations discovered from your RMV URL (' + centers.length + ' available)';
+                centersContainer.appendChild(header);
+            }
+            
+            centers.forEach(center => {
+                const div = document.createElement('div');
+                div.className = 'service-center';
+                div.textContent = center;
+                div.onclick = () => toggleSelection(div, center);
+                centersContainer.appendChild(div);
+            });
+        }
+        
+        // Function to discover locations from RMV URL
+        async function discoverLocationsFromUrl() {
+            const rmvUrl = document.getElementById('rmvUrl').value;
+            
+            if (!rmvUrl || !rmvUrl.includes('rmvmassdotappt.cxmflow.com')) {
+                // If URL is cleared or invalid, revert to default locations
+                if (isUsingDynamicLocations) {
+                    addLog('Reverted to default locations', 'info');
+                    populateServiceCenters(serviceCenters, false);
+                    isUsingDynamicLocations = false;
+                }
+                return;
+            }
+            
+            addLog('🔍 Discovering available locations from RMV URL...', 'info');
+            
+            // Show loading indicator
+            const centersContainer = document.getElementById('serviceCenters');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 20px; color: #667eea; font-weight: 600;';
+            loadingDiv.innerHTML = '⚡ Discovering locations from your URL...';
+            centersContainer.appendChild(loadingDiv);
+            
+            try {
+                const response = await fetch('/api/discover-locations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rmvUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.totalFound > 0) {
+                    // Use discovered locations
+                    const locationNames = data.locations.length > 0 
+                        ? data.locations.map(loc => loc.name)
+                        : data.offices.map(office => office.displayName);
+                    
+                    discoveredLocations = data;
+                    serviceCenters = locationNames;
+                    isUsingDynamicLocations = true;
+                    
+                    populateServiceCenters(locationNames, true);
+                    addLog(`✅ Found ${data.totalFound} locations from your RMV URL in ${data.duration}s`, 'success');
+                    addLog('📋 Location list updated with actual RMV locations', 'info');
+                    
+                } else if (data.success && data.totalFound === 0) {
+                    addLog('⚠️ No locations found in RMV URL. Using default locations.', 'warning');
+                    populateServiceCenters(serviceCenters, false);
+                    isUsingDynamicLocations = false;
+                } else {
+                    addLog('❌ Failed to discover locations: ' + (data.error || 'Unknown error'), 'error');
+                    populateServiceCenters(serviceCenters, false);
+                    isUsingDynamicLocations = false;
+                }
+                
+            } catch (error) {
+                addLog('❌ Error discovering locations: ' + error.message, 'error');
+                populateServiceCenters(serviceCenters, false);
+                isUsingDynamicLocations = false;
             }
         }
 

@@ -988,6 +988,124 @@ app.post('/api/extract-personal-data', async (req, res) => {
     }
 });
 
+// New endpoint to discover available locations from RMV URL
+app.post('/api/discover-locations', async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        const { rmvUrl } = req.body;
+
+        if (!rmvUrl) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'RMV URL is required' 
+            });
+        }
+
+        if (!rmvUrl.includes('rmvmassdotappt.cxmflow.com')) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Invalid RMV URL format' 
+            });
+        }
+
+        logger.info('🔍 Starting location discovery from RMV URL...');
+
+        // Initialize browser if needed
+        if (!service.scraper.browser) {
+            await service.scraper.initialize();
+        }
+
+        const page = await service.scraper.browser.newPage();
+
+        try {
+            // Set user agent to avoid detection
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+            
+            // Navigate to RMV URL
+            await page.goto(rmvUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+            await page.waitForTimeout(3000);
+            
+            // Extract location data from the page
+            const locationData = await page.evaluate(() => {
+                const data = {
+                    locations: [],
+                    offices: [],
+                    pageTitle: document.title,
+                    debugInfo: {
+                        hasDisplayData: typeof window.displayData !== 'undefined',
+                        displayDataLength: window.displayData?.length || 0
+                    }
+                };
+                
+                // Extract structured location data from window.displayData
+                if (window.displayData && Array.isArray(window.displayData)) {
+                    data.locations = window.displayData.map(location => ({
+                        id: location.Id,
+                        name: location.Name,
+                        address: location.Address,
+                        latitude: location.Latitude,
+                        longitude: location.Longitude,
+                        workingHours: location.InfoPageWorkingHours,
+                        displayText: location.DisplayText
+                    }));
+                }
+                
+                // Also extract office buttons from the DOM
+                const qflowButtons = document.querySelectorAll('.QflowObjectItem[data-id]');
+                qflowButtons.forEach(btn => {
+                    const officeName = btn.textContent.split('\n')[0].trim();
+                    const dataId = btn.getAttribute('data-id');
+                    const fullText = btn.textContent.trim();
+                    
+                    if (officeName && dataId) {
+                        data.offices.push({
+                            name: officeName,
+                            id: dataId,
+                            fullText: fullText,
+                            displayName: officeName // Clean name for UI
+                        });
+                    }
+                });
+                
+                return data;
+            });
+
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            
+            logger.info(`✅ Location discovery completed in ${duration}s:`, {
+                locationsFound: locationData.locations.length,
+                officesFound: locationData.offices.length,
+                hasDisplayData: locationData.debugInfo.hasDisplayData
+            });
+
+            // Return the discovered locations
+            res.json({
+                success: true,
+                locations: locationData.locations,
+                offices: locationData.offices,
+                totalFound: locationData.locations.length || locationData.offices.length,
+                duration: duration,
+                debugInfo: locationData.debugInfo,
+                message: `Found ${locationData.locations.length || locationData.offices.length} available locations`
+            });
+
+        } finally {
+            await page.close();
+        }
+
+    } catch (error) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        logger.error('❌ Location discovery failed:', error.message);
+        
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            duration: duration
+        });
+    }
+});
+
 // Helper function to save extracted user data
 async function saveExtractedUserData(userData) {
     try {

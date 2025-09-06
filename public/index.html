@@ -1271,7 +1271,7 @@
 
             <div class="section-instructions">
                 <div class="main-instruction">Select which RMV service centers to monitor for available appointments</div>
-                <div class="sub-instruction">Choose multiple locations to increase your chances of finding an appointment. Click on locations to select/deselect them. Selected centers will be highlighted in blue. Use regional buttons for quick selection. <strong>Maximum 8 locations</strong> can be selected to avoid overloading RMV servers.</div>
+                <div class="sub-instruction">🎯 <strong>Smart Location Discovery:</strong> When you enter an RMV URL above, we'll automatically discover the exact locations available for your appointment type. Otherwise, choose from our default Massachusetts locations. Use regional buttons for quick selection. <strong>Maximum 8 locations</strong> can be selected to avoid overloading RMV servers.</div>
             </div>
 
             <div class="controls-container">
@@ -1545,8 +1545,12 @@
     </div>
 
     <script>
-        // Service Centers Data (alphabetically sorted with actual RMV addresses for distance calculation)
-        const serviceCenters = [
+        // Service Centers Data - Now Dynamic! (alphabetically sorted with actual RMV addresses for distance calculation)
+        
+        // Store discovered locations from RMV URL
+        let discoveredLocations = null;
+        let isUsingDynamicLocations = false;
+        let originalServiceCenters = [
             { name: 'Attleboro', address: '75 Park Street, Attleboro MA, 02703', lat: 41.9445, lng: -71.2856 },
             { name: 'Braintree', address: '10 Plain Street, Braintree MA, 02184', lat: 42.2057, lng: -70.9995 },
             { name: 'Brockton', address: '490 Forest Avenue, Brockton MA, 02301', lat: 42.0834, lng: -71.0184 },
@@ -1573,6 +1577,9 @@
             { name: 'Wilmington', address: '355 Middlesex Avenue, Wilmington MA, 01887', lat: 42.5584, lng: -71.1737 },
             { name: 'Worcester', address: '50 SW Cutoff, Worcester MA, 16034', lat: 42.2626, lng: -71.8023 }
         ];
+        
+        // Initialize serviceCenters with original data
+        let serviceCenters = [...originalServiceCenters];
 
         // Regional groupings
         const regions = {
@@ -1789,6 +1796,14 @@
             // Add RMV connection event listener
             const connectBtn = document.getElementById('connectRMV');
             console.log('Connect button found:', connectBtn);
+            
+            // Add event listener to RMV URL field for dynamic location discovery
+            const rmvUrlField = document.getElementById('rmvUrl');
+            if (rmvUrlField) {
+                rmvUrlField.addEventListener('blur', discoverLocationsFromUrl);
+                rmvUrlField.addEventListener('change', discoverLocationsFromUrl);
+                console.log('Added location discovery listeners to RMV URL field');
+            }
             if (connectBtn) {
                 connectBtn.addEventListener('click', connectToRMV);
                 connectBtn.setAttribute('data-listener-added', 'true');
@@ -3695,6 +3710,102 @@
             if (isMonitoringActive) {
                 // If monitoring is active, show loading states for both views
                 showLoadingStates();
+            }
+        }
+        
+        // Dynamic Location Discovery Functions
+        async function discoverLocationsFromUrl() {
+            const rmvUrl = document.getElementById('rmvUrl').value;
+            
+            if (!rmvUrl || !rmvUrl.includes('rmvmassdotappt.cxmflow.com')) {
+                // If URL is cleared or invalid, revert to default locations
+                if (isUsingDynamicLocations) {
+                    addLog('Reverted to default locations', 'info');
+                    serviceCenters = [...originalServiceCenters];
+                    populateServiceCenters();
+                    isUsingDynamicLocations = false;
+                    
+                    // Re-enable distance sorting if ZIP was entered
+                    if (userZipCoords) {
+                        document.getElementById('sortDistance').disabled = false;
+                    }
+                }
+                return;
+            }
+            
+            addLog('🔍 Discovering available locations from RMV URL...', 'info');
+            
+            try {
+                const response = await fetch('/api/discover-locations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rmvUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.totalFound > 0) {
+                    // Convert discovered locations to the format expected by this advanced UI
+                    const locationObjects = data.locations.length > 0 ? data.locations : data.offices;
+                    
+                    const discoveredServiceCenters = locationObjects.map(loc => {
+                        // Try to find matching coordinates from originalServiceCenters
+                        const existingCenter = originalServiceCenters.find(center => 
+                            center.name.toLowerCase() === (loc.name || loc.displayName).toLowerCase()
+                        );
+                        
+                        return {
+                            name: loc.name || loc.displayName,
+                            address: loc.address || existingCenter?.address || 'Address not available',
+                            lat: parseFloat(loc.latitude) || existingCenter?.lat || 42.3601, // Default to Boston coords
+                            lng: parseFloat(loc.longitude) || existingCenter?.lng || -71.0589
+                        };
+                    });
+                    
+                    // Update the serviceCenters array
+                    discoveredLocations = data;
+                    serviceCenters = discoveredServiceCenters;
+                    isUsingDynamicLocations = true;
+                    
+                    // Clear selections and repopulate
+                    selectedCenters.clear();
+                    populateServiceCenters();
+                    
+                    // Update distance calculations if ZIP was entered
+                    if (userZipCoords) {
+                        centersWithDistance = serviceCenters.map(center => ({
+                            ...center,
+                            distance: calculateDistance(userZipCoords.lat, userZipCoords.lng, center.lat, center.lng)
+                        })).sort((a, b) => a.distance - b.distance);
+                        
+                        // If currently in distance mode, update the display
+                        if (sortMode === 'distance') {
+                            populateServiceCenters(centersWithDistance);
+                        }
+                    }
+                    
+                    addLog(`✅ Found ${data.totalFound} locations from your RMV URL in ${data.duration}s`, 'success');
+                    addLog('📋 Location list updated with actual RMV locations', 'info');
+                    
+                } else if (data.success && data.totalFound === 0) {
+                    addLog('⚠️ No locations found in RMV URL. Using default locations.', 'warning');
+                    serviceCenters = [...originalServiceCenters];
+                    populateServiceCenters();
+                    isUsingDynamicLocations = false;
+                } else {
+                    addLog('❌ Failed to discover locations: ' + (data.error || 'Unknown error'), 'error');
+                    serviceCenters = [...originalServiceCenters];
+                    populateServiceCenters();
+                    isUsingDynamicLocations = false;
+                }
+                
+            } catch (error) {
+                addLog('❌ Error discovering locations: ' + error.message, 'error');
+                serviceCenters = [...originalServiceCenters];
+                populateServiceCenters();
+                isUsingDynamicLocations = false;
             }
         }
         

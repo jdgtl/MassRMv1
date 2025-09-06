@@ -1456,6 +1456,75 @@
                     <h3 style="margin-bottom: 10px; color: #374151;">Searching for Appointments</h3>
                     <p style="color: #6b7280;">Please wait while we check for available appointments...</p>
                 </div>
+
+                <!-- List View Content (blocked by overlay initially) -->
+                <div id="listViewContent" style="display: none;">
+                    <div id="appointmentsContainer">
+                        <div class="appointments-inactive" id="appointmentsInactive">
+                            <div style="text-align: center; padding: 40px; color: #6b7280;">
+                                <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
+                                <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
+                                <p>Click "Start Monitoring" above to begin searching for appointments</p>
+                            </div>
+                        </div>
+                        <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p>Searching for appointments...</p>
+                        </div>
+                        <div id="appointmentsList" style="display: none;">
+                            <!-- Appointments will be populated here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar View Content (blocked by overlay initially) -->
+                <div id="calendarViewContent" style="display: block;">
+                    <!-- Calendar inactive state -->
+                    <div id="calendarInactive" class="inactive-state">
+                        <div style="text-align: center; padding: 40px; color: #6b7280;">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🗓️</div>
+                            <h3 style="margin-bottom: 10px; color: #374151;">Calendar View Available</h3>
+                            <p>Start monitoring to see appointment availability on calendar</p>
+                        </div>
+                    </div>
+
+                    <!-- Calendar loading state -->
+                    <div class="appointments-loading" id="calendarLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Searching for appointments...</p>
+                    </div>
+
+                    <!-- Calendar content -->
+                    <div id="calendarView" style="display: none;">
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <button class="calendar-nav-btn" onclick="previousMonth()">‹</button>
+                                <h3 id="currentMonthYear" class="calendar-title">Loading...</h3>
+                                <button class="calendar-nav-btn" onclick="nextMonth()">›</button>
+                            </div>
+                            <div class="calendar-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background-color: #dcfce7; border: 1px solid #059669;"></div>
+                                    <span>Preferred appointments available</span>
+                                </div>
+                            </div>
+                            <div class="calendar-grid">
+                                <div class="calendar-weekday-headers">
+                                    <div class="calendar-weekday-header">Sun</div>
+                                    <div class="calendar-weekday-header">Mon</div>
+                                    <div class="calendar-weekday-header">Tue</div>
+                                    <div class="calendar-weekday-header">Wed</div>
+                                    <div class="calendar-weekday-header">Thu</div>
+                                    <div class="calendar-weekday-header">Fri</div>
+                                    <div class="calendar-weekday-header">Sat</div>
+                                </div>
+                                <div id="calendarDays" class="calendar-days">
+                                    <!-- Calendar days will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Stop Monitoring Button (bottom, hidden initially) -->
@@ -1463,61 +1532,6 @@
                 <button class="btn btn-danger" onclick="stopMonitoring()" id="stopBtn" style="font-size: 1em; padding: 8px 20px;">Stop Monitoring</button>
             </div>
 
-            <!-- List View Content (blocked by overlay initially) -->
-            <div id="listViewContent" style="display: none;">
-                <div id="appointmentsContainer">
-                    <div class="appointments-inactive" id="appointmentsInactive">
-                        <div style="text-align: center; padding: 40px; color: #6b7280;">
-                            <div style="font-size: 3rem; margin-bottom: 15px;">⏸️</div>
-                            <h3 style="margin-bottom: 10px; color: #374151;">Monitoring Not Started</h3>
-                            <p>Click "Start Monitoring" above to begin searching for appointments</p>
-                        </div>
-                    </div>
-                    <div class="appointments-loading" id="appointmentsLoading" style="display: none;">
-                        <div class="loading-spinner"></div>
-                        <p>Searching for appointments...</p>
-                    </div>
-                    <div id="appointmentsList" style="display: none;">
-                        <!-- Appointments will be populated here by JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calendar View Content (blocked by overlay initially) -->
-            <div id="calendarViewContent" style="display: block;">
-                <!-- Calendar inactive state -->
-                <div id="calendarInactive" class="inactive-state">
-                    <div style="text-align: center; padding: 40px; color: #6b7280;">
-                        <div style="font-size: 3rem; margin-bottom: 15px;">🗓️</div>
-                        <h3 style="margin-bottom: 10px; color: #374151;">Calendar View Available</h3>
-                        <p>Start monitoring to see appointment availability on calendar</p>
-                    </div>
-                </div>
-
-                <!-- Calendar loading state -->
-                <div class="appointments-loading" id="calendarLoading" style="display: none;">
-                    <div class="loading-spinner"></div>
-                    <p>Searching for appointments...</p>
-                </div>
-
-                <!-- Calendar content -->
-                <div id="calendarView" style="display: none;">
-                    <div class="calendar-container">
-                        <div class="calendar-header">
-                            <button class="calendar-nav-btn" onclick="previousMonth()">‹</button>
-                            <h3 id="currentMonthYear" class="calendar-title">Loading...</h3>
-                            <button class="calendar-nav-btn" onclick="nextMonth()">›</button>
-                        </div>
-                        <div class="calendar-legend">
-                            <div class="legend-item">
-                                <div class="legend-color" style="background-color: #dcfce7; border: 1px solid #059669;"></div>
-                                <span>Preferred appointments available</span>
-                            </div>
-                        </div>
-                        <div id="calendarGrid" class="calendar-grid"></div>
-                    </div>
-                </div>
-            </div>
         </div>
         
 

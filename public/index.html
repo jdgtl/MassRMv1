@@ -1769,6 +1769,7 @@
 
         // State management
         let monitoringInterval = null;
+        let hasEverStartedMonitoring = false; // Track if monitoring has ever been started (for overlay behavior)
         let selectedCenters = new Set();
         let activeRegions = new Set();
         let sortMode = 'alphabetical';
@@ -2524,6 +2525,9 @@
             const monitorStatus = document.getElementById('monitorStatus');
             const subInstruction = document.getElementById('monitoringSubInstruction');
             
+            // Mark that monitoring has been started and remove absolute positioning if needed
+            hasEverStartedMonitoring = true;
+            
             // Remove absolute positioning and hide start section, show loading
             if (startMonitoringSection) {
                 startMonitoringSection.style.position = 'static';
@@ -2684,22 +2688,23 @@
             const listViewContent = document.getElementById('listViewContent');
             const calendarViewContent = document.getElementById('calendarViewContent');
             
-            // Restore absolute positioning and show start monitoring section, hide loading and stop
+            // Show start monitoring section (use normal flow since monitoring has been started before)
             if (startMonitoringSection) {
-                startMonitoringSection.style.position = 'absolute';
+                // Keep static positioning since this is no longer initial state
+                startMonitoringSection.style.position = 'static';
                 startMonitoringSection.style.display = 'block';
             }
             if (appointmentsLoading) appointmentsLoading.style.display = 'none';
             if (stopMonitoringSection) stopMonitoringSection.style.display = 'none';
             
-            // Reset content views to initial state (calendar visible, list hidden but blocked by overlay)
+            // Show appropriate content view (monitoring has been started, so views should be visible)
             if (listViewContent) listViewContent.style.display = 'none';
             if (calendarViewContent) calendarViewContent.style.display = 'block';
             
-            // Disable tabs again
+            // Keep tabs enabled since monitoring has been started before (user can view previous results)
             if (viewToggleContainer) {
-                viewToggleContainer.style.opacity = '0.5';
-                viewToggleContainer.style.pointerEvents = 'none';
+                viewToggleContainer.style.opacity = '1';
+                viewToggleContainer.style.pointerEvents = 'auto';
             }
             
             // Reset status badge
@@ -2708,9 +2713,9 @@
                 monitorStatus.className = 'status-badge status-inactive';
             }
             
-            // Reset sub-instruction
+            // Update sub-instruction (monitoring has been used, so mention restarting)
             if (subInstruction) {
-                subInstruction.textContent = 'Start monitoring to automatically check for available appointments every 5 minutes. Results will appear in your preferred view below.';
+                subInstruction.textContent = 'Monitoring stopped. Click "Start Monitoring" below to resume checking for appointments.';
             }
         }
 

@@ -2,9 +2,13 @@
 nixPkgs = ["nodejs_18", "chromium"]
 
 [phases.install]
-cmds = ["npm ci --production"]
+cmds = [
+  "npm ci --production",
+  "which chromium || echo 'Chromium not found in PATH'",
+  "ls -la /nix/store/*/bin/chromium* || echo 'No chromium in nix store'",
+  "export PUPPETEER_EXECUTABLE_PATH=$(which chromium)"
+]
 
 [variables]
 NODE_ENV = "production"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"

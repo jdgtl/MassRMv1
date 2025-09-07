@@ -415,7 +415,20 @@ Results Display + Notifications
 
 ## 🔄 Git Commit History
 
-**Latest Commit**: `a9d2a8e` - "Add essential system dependencies for Puppeteer bundled Chromium on Railway"
+**Latest Commit**: `d2bc1d3` - "🗺️ Tighten regional boundaries to eliminate all overlaps"
+- 🗺️ **BOUNDARY REFINEMENT**: Fixed overlapping geographic bounds causing incorrect regional assignments
+- ✅ **DANVERS FIX**: Resolved issue where Danvers was incorrectly assigned to Boston instead of North Shore
+- 📏 **TIGHTENED BOUNDS**: Boston Metro (42.15-42.45°N), South Shore (≤42.15°N), Worcester (≤-71.45°W)
+- 🎯 **CLEAN SEPARATION**: Eliminated all regional overlap zones for accurate location assignment
+- 🔄 **PRIORITY ORDERING**: North Shore checks before Boston to prevent geographic bound conflicts
+
+**Previous**: `d4f630e` - "🗺️ Fix regional mapping: Check North Shore before Boston to prevent overlap"
+- 🔄 **REORDERED CHECKS**: North Shore evaluated before Boston bounds to prevent assignment conflicts
+- 🎯 **DANVERS ISSUE**: Fixed incorrect Boston assignment due to overlapping coordinate ranges
+- 📍 **COORDINATE ANALYSIS**: Danvers (42.5751°N, -70.9301°W) now correctly matches North Shore first
+- 🗺️ **REGIONAL ACCURACY**: Maintains all other assignments while fixing geographic precedence
+
+**Previous**: `7abbfbc` - "🚀 Complete Railway production deployment with Puppeteer v23.0.0 modernization"
 - 🚀 **RAILWAY UBUNTU 24.04**: Added comprehensive apt packages for Chromium runtime support
 - 📦 **SYSTEM LIBRARIES**: libglib2.0-0, libnss3, libatk-bridge2.0-0, libdrm2, libgbm1, libgtk-3-0, etc.
 - 🔧 **PUPPETEER v23.0.0**: Upgraded with new headless mode and enhanced browser initialization

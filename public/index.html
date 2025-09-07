@@ -1274,6 +1274,35 @@
                 <div class="sub-instruction">🎯 <strong>Smart Location Discovery:</strong> When you enter an RMV URL above, we'll automatically discover the exact locations available for your appointment type. Otherwise, choose from our default Massachusetts locations. Use regional buttons for quick selection. <strong>Maximum 8 locations</strong> can be selected to avoid overloading RMV servers.</div>
             </div>
 
+            <!-- Location Discovery Error Message (hidden by default) -->
+            <div id="locationDiscoveryError" class="discovery-error" style="display: none; background: #fef2f2; border: 2px solid #fca5a5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <div style="color: #dc2626; font-weight: 600; margin-bottom: 10px;">
+                    🚫 Unable to discover available locations for your appointment
+                </div>
+                <div style="color: #7f1d1d; margin-bottom: 15px;">
+                    This usually means:
+                    <ul style="margin: 8px 0 0 20px;">
+                        <li>Your RMV URL is incomplete or expired</li>
+                        <li>The appointment type has specific location restrictions</li>
+                        <li>RMV's system is temporarily unavailable</li>
+                    </ul>
+                </div>
+                <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 12px; margin-bottom: 15px;">
+                    <strong>💡 Next Steps:</strong>
+                    <ol style="margin: 8px 0 0 20px;">
+                        <li>Double-check your complete RMV scheduling URL in Section 1</li>
+                        <li>Try refreshing the page and entering the URL again</li>
+                        <li>Visit <a href="https://atlas-myrmv.massdot.state.ma.us/myrmv/_/" target="_blank" style="color: #1d4ed8; text-decoration: underline;">RMV's official site</a> for a fresh link</li>
+                    </ol>
+                </div>
+                <button onclick="retryLocationDiscovery()" class="btn btn-primary" style="margin-right: 10px;">
+                    🔄 Retry Location Discovery
+                </button>
+                <button onclick="clearLocationError()" class="btn btn-secondary">
+                    ✏️ Edit RMV URL
+                </button>
+            </div>
+
             <div class="controls-container">
                 <div class="regional-container">
                     <div class="regional-buttons" id="regionalButtons">
@@ -1598,7 +1627,7 @@
         let discoveredLocations = null;
         let isUsingDynamicLocations = false;
         
-        // Original service centers - restored to working state
+        // Keep for development/testing only - DO NOT use as production fallback
         let originalServiceCenters = [
             { name: 'Attleboro', address: '75 Park Street, Attleboro MA, 02703', lat: 41.9445, lng: -71.2856 },
             { name: 'Braintree', address: '10 Plain Street, Braintree MA, 02184', lat: 42.2057, lng: -70.9995 },
@@ -1886,6 +1915,23 @@
 
                 if (response.ok) {
                     const result = await response.json();
+                    
+                    // Check if extraction failed due to no appointments
+                    if (result.personalData && result.personalData.error && result.personalData.error.includes('No appointments available')) {
+                        loader.style.display = 'none';
+                        
+                        // Show helpful error message for no appointments scenario
+                        alert('🚫 No appointments available in your RMV URL\n\n' +
+                              'This usually means:\n' +
+                              '• The appointment slots have been filled\n' +
+                              '• Your URL has expired\n' +
+                              '• The time slots have passed\n\n' +
+                              '💡 Solution: Please visit the Massachusetts RMV website to get a fresh booking URL with available appointments.');
+                        
+                        connectBtn.disabled = false;
+                        return;
+                    }
+                    
                     extractedPersonalData = result.personalData;
                     
                     // Update UI with success
@@ -1927,6 +1973,89 @@
                 alert(errorMessage);
                 connectBtn.disabled = false;
             }
+        }
+
+        // Location Discovery Error Handling Functions
+        // Show location discovery error
+        function showLocationDiscoveryError() {
+            const errorDiv = document.getElementById('locationDiscoveryError');
+            const serviceCentersContainer = document.getElementById('serviceCenters');
+            const regionalButtons = document.getElementById('regionalButtons');
+            
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+            }
+            
+            // Hide service centers and regional buttons
+            if (serviceCentersContainer) {
+                serviceCentersContainer.style.display = 'none';
+            }
+            if (regionalButtons) {
+                regionalButtons.parentElement.style.display = 'none';
+            }
+        }
+
+        // Hide location discovery error
+        function hideLocationDiscoveryError() {
+            const errorDiv = document.getElementById('locationDiscoveryError');
+            const serviceCentersContainer = document.getElementById('serviceCenters');
+            const regionalButtons = document.getElementById('regionalButtons');
+            
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // Show service centers and regional buttons
+            if (serviceCentersContainer) {
+                serviceCentersContainer.style.display = 'grid';
+            }
+            if (regionalButtons) {
+                regionalButtons.parentElement.style.display = 'flex';
+            }
+        }
+
+        // Retry location discovery
+        function retryLocationDiscovery() {
+            const rmvUrl = document.getElementById('rmvUrl').value.trim();
+            
+            if (!rmvUrl) {
+                alert('Please enter your RMV URL first in Section 1');
+                document.getElementById('rmvUrl').focus();
+                return;
+            }
+            
+            hideLocationDiscoveryError();
+            addLog('🔄 Retrying location discovery...', 'info');
+            discoverLocationsFromUrl();
+        }
+
+        // Clear location error and focus on URL field
+        function clearLocationError() {
+            hideLocationDiscoveryError();
+            document.getElementById('rmvUrl').focus();
+            document.getElementById('rmvUrl').select();
+        }
+
+        // Hide subsequent sections when location discovery fails
+        function hideSubsequentSections() {
+            const sections = ['section3', 'section4', 'section5', 'section6', 'section7'];
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section && !section.classList.contains('sections-hidden')) {
+                    section.classList.add('sections-hidden');
+                }
+            });
+        }
+
+        // Show subsequent sections when location discovery succeeds
+        function showSubsequentSections() {
+            const sections = ['section3', 'section4', 'section5', 'section6', 'section7'];
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section && section.classList.contains('sections-hidden')) {
+                    section.classList.remove('sections-hidden');
+                }
+            });
         }
 
         // Initialize UI
@@ -2363,6 +2492,19 @@
                 return `🎯 Discovered ${appointmentCount} appointments across ${locationCount} locations`;
             }
             
+            // Location discovery error messages
+            if (message.includes('Location discovery failed:') || message.includes('No locations found for your appointment type')) {
+                return `❌ Unable to find available locations. Please check your RMV URL and try again`;
+            }
+            
+            if (message.includes('Retrying location discovery')) {
+                return `🔄 Checking for available locations again...`;
+            }
+            
+            if (message.includes('Location discovery required before monitoring can start')) {
+                return `⚠️ Need valid locations before monitoring can begin. Check Section 2`;
+            }
+            
             if (message.includes('No appointments available at') && message.includes('locations')) {
                 const locationCount = message.match(/(\d+)/)?.[1] || 'selected';
                 return `😕 No appointments currently available at ${locationCount} locations - will check again in 5 minutes`;
@@ -2471,6 +2613,14 @@
                 alert('⚠️ Please enter a valid 5-digit ZIP code in Section 1');
                 addLog('Please enter a valid 5-digit ZIP code in Section 1', 'error');
                 document.getElementById('zipCode').focus();
+                return false;
+            }
+
+            // Check if locations have been discovered (Section 2)
+            if (serviceCenters.length === 0) {
+                alert('⚠️ No locations available. Please check your RMV URL and retry location discovery in Section 2');
+                addLog('Location discovery required before monitoring can start', 'error');
+                document.getElementById('section2').scrollIntoView({ behavior: 'smooth' });
                 return false;
             }
 
@@ -4027,6 +4177,10 @@
                     serviceCenters = discoveredServiceCenters;
                     isUsingDynamicLocations = true;
                     
+                    // Hide any previous error and show sections
+                    hideLocationDiscoveryError();
+                    showSubsequentSections();
+                    
                     // Store appointment information for Section 5 display
                     if (data.appointmentInfo) {
                         window.currentAppointmentInfo = data.appointmentInfo;
@@ -4060,24 +4214,64 @@
                     addLog('📋 Location list updated with actual RMV locations', 'info');
                     
                 } else if (data.success && data.totalFound === 0) {
-                    addLog('❌ No locations found in RMV URL. Please check your URL or try a different appointment type.', 'error');
+                    console.error('No locations discovered:', data);
+                    addLog(`❌ No locations found for your appointment type`, 'error');
+                    
+                    // Clear any existing locations
                     serviceCenters = [];
-                    populateServiceCenters();
                     isUsingDynamicLocations = false;
+                    
+                    // Show error message
+                    showLocationDiscoveryError();
+                    
+                    // Clear service centers display
+                    populateServiceCenters([]);
+                    
+                    // Clear regional mappings
+                    clearRegionalMappings();
+                    
+                    // Hide other sections until resolved
+                    hideSubsequentSections();
                 } else {
-                    addLog('❌ Failed to discover locations: ' + (data.error || 'Unknown error'), 'error');
-                    addLog('⚠️ Please check your RMV URL and try again. Location discovery is required.', 'error');
+                    console.error('Location discovery failed:', data);
+                    addLog(`❌ Location discovery failed: ${data.error || 'Unknown error'}`, 'error');
+                    
+                    // Clear any existing locations
                     serviceCenters = [];
-                    populateServiceCenters();
                     isUsingDynamicLocations = false;
+                    
+                    // Show error message
+                    showLocationDiscoveryError();
+                    
+                    // Clear service centers display
+                    populateServiceCenters([]);
+                    
+                    // Clear regional mappings
+                    clearRegionalMappings();
+                    
+                    // Hide other sections until resolved
+                    hideSubsequentSections();
                 }
                 
             } catch (error) {
-                addLog('❌ Error discovering locations: ' + error.message, 'error');
-                addLog('⚠️ Please check your RMV URL and try again. Location discovery is required.', 'error');
+                console.error('Location discovery failed:', error);
+                addLog(`❌ Location discovery failed: ${error.message}`, 'error');
+                
+                // Clear any existing locations
                 serviceCenters = [];
-                populateServiceCenters();
                 isUsingDynamicLocations = false;
+                
+                // Show error message
+                showLocationDiscoveryError();
+                
+                // Clear service centers display
+                populateServiceCenters([]);
+                
+                // Clear regional mappings
+                clearRegionalMappings();
+                
+                // Hide other sections until resolved
+                hideSubsequentSections();
             } finally {
                 if (discoveryTimeoutId) {
                     clearTimeout(discoveryTimeoutId); // Clear the timeout since we're finishing

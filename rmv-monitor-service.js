@@ -790,7 +790,7 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
         });
         
         // Quick wait for dynamic content
-        await page.waitForTimeout(1500);
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         // STEP 2: Extract offices quickly
         const offices = await page.evaluate(() => {
@@ -836,12 +836,12 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                 
                 // Scroll element into view naturally
                 await element.scrollIntoView();
-                await page.waitForTimeout(300 + Math.random() * 200); // Random delay 300-500ms
+                await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200)); // Random delay 300-500ms
                 
                 // Verify page stability before mouse interaction
                 try {
                     await page.evaluate(() => document.readyState);
-                    await page.waitForTimeout(500); // Additional stability wait
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Additional stability wait
                 } catch (stabilityError) {
                     throw new Error(`Page stability check failed: ${stabilityError.message}`);
                 }
@@ -871,7 +871,7 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                 let navigationSuccessful = false;
                 try {
                     // First, wait a bit for the click to register
-                    await page.waitForTimeout(1000);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     await Promise.race([
                         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 })
@@ -885,7 +885,7 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                 } catch (navError) {
                     logger.warn(`⚠️ Navigation timeout for ${office.name}, trying to continue anyway...`);
                     // Give it more time to load
-                    await page.waitForTimeout(3000);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
 
                 // Hybrid appointment extraction (rmv1 + rmv2 selectors for better compatibility)
@@ -993,7 +993,7 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                 // Quick navigation back to office list (except for last office)
                 if (office !== matchedOffices[matchedOffices.length - 1]) {
                     await page.goBack({ waitUntil: 'domcontentloaded', timeout: 4000 });
-                    await page.waitForTimeout(300);
+                    await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
             } catch (error) {
@@ -1015,7 +1015,7 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                             
                             // Re-navigate to main page
                             await page.goto(rmvUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                             logger.info(`🔄 Page recovered, but skipping ${office.name} for this cycle`);
                         }
                     } catch (recoveryError) {

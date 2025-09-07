@@ -117,15 +117,25 @@
 
 ## 🚨 Latest Major Updates
 
-### ✨ FRONTEND POLISH & APPOINTMENT TYPE INTEGRATION (September 7, 2025):
+### 🚀 RAILWAY DEPLOYMENT FIX & FRONTEND POLISH (September 7, 2025):
 ```javascript
+// ✅ RAILWAY DEPLOYMENT: Fixed 502 errors by restoring nixpacks.toml and Procfile
+// ✅ PUPPETEER DEPENDENCIES: Chromium installation configured for Railway platform
 // ✅ NAVIGATION RELIABILITY: 15-second timeouts with enhanced error handling
 // ✅ CONSOLE ERROR FIX: Eliminated appointmentsList element not found error
 // ✅ APPOINTMENT TYPES: Service and appointment type display in Section 5 banner
 // ✅ VIEW MANAGEMENT: Proper delegation to displayAppointments() function
 // ✅ BROWSER STABILITY: Warm-up periods and page stability checks
-// ✅ PRODUCTION READY: 53 appointments consistently extracted and displayed
+// ✅ PRODUCTION READY: 53 appointments consistently extracted and displayed locally
 ```
+
+**Railway Deployment Fix:**
+- **Root Cause**: Codebase cleanup accidentally removed critical Railway deployment files
+- **Files Restored**: `nixpacks.toml` and `Procfile` recovered from git history (commit e7e72c9)
+- **Chromium Installation**: nixpacks.toml now includes `chromium` package for Puppeteer support
+- **Build Configuration**: Proper Node.js 18 + Chromium dependencies installed during Railway build
+- **Environment Variables**: PUPPETEER_EXECUTABLE_PATH aligned with nixpacks installation path
+- **502 Error Resolution**: Restored Puppeteer functionality on Railway platform
 
 **Frontend Polish Implementation:**
 - Fixed console error by removing redundant DOM manipulation in `pollForResults()`
@@ -319,6 +329,9 @@ Results Display + Notifications
 
 ### Configuration:
 - `package.json` - **UPDATED** Dependencies and scripts optimized for production
+- `nixpacks.toml` - **CRITICAL** Railway deployment configuration with Chromium dependencies
+- `Procfile` - **CRITICAL** Railway process definition (`web: npm start`)
+- `ecosystem.config.js` - PM2 production deployment configuration
 - `DEVELOPMENT.md` - Git workflow and development guide
 - `README.md` - **UPDATED** Project overview with new features
 - `CLAUDE.md` - **THIS FILE** Complete project status and documentation

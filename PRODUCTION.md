@@ -55,7 +55,55 @@ npm start
 curl http://localhost:3000/api/health
 ```
 
-#### Cloud Deployment (Railway/Heroku):
+#### Railway Cloud Deployment:
+
+**🚨 CRITICAL: Railway Deployment Requirements**
+
+Railway deployment requires specific configuration files for Puppeteer/Chromium support:
+
+**Required Files:**
+- `nixpacks.toml` - **CRITICAL** for Chromium installation
+- `Procfile` - Process definition for Railway
+
+**nixpacks.toml Configuration:**
+```toml
+[phases.setup]
+nixPkgs = ["nodejs_18", "chromium"]
+
+[phases.install]
+cmds = ["npm ci --production"]
+
+[variables]
+NODE_ENV = "production"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
+```
+
+**Procfile Configuration:**
+```
+web: npm start
+```
+
+**Environment Variables (Set in Railway Dashboard):**
+```bash
+NODE_ENV=production
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Email and notification settings as needed
+```
+
+**Deploy Commands:**
+```bash
+# Deploy to Railway
+railway up
+
+# Monitor deployment
+railway logs
+```
+
+**⚠️ Common Issue:** If you get 502 errors, ensure nixpacks.toml and Procfile exist - they were accidentally removed during codebase cleanup but are essential for Puppeteer functionality on Railway.
+
+#### Heroku Deployment:
 ```bash
 # Set environment variables
 PORT=3000
@@ -64,7 +112,7 @@ NODE_ENV=production
 # Deploy files
 git add .
 git commit -m "Production deployment with Puppeteer resilience"
-git push origin main
+git push heroku main
 ```
 
 #### VPS/Docker Deployment:

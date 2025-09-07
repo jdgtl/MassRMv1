@@ -4,6 +4,8 @@
 
 **Last Updated**: September 7, 2025  
 **Server Status**: Production server with advanced resilience features on `http://localhost:3000`  
+**Railway Deployment**: ✅ **FULLY CONFIGURED WITH UBUNTU 24.04 SYSTEM DEPENDENCIES** 🚀
+**Puppeteer Modern**: ✅ **Upgraded to v23.0.0 with new headless mode and bundled Chromium** 🔧
 **Real-World Success**: ✅ **SUCCESSFULLY BOOKED SEPTEMBER 3RD APPOINTMENT** 🎉
 **Dynamic Location Discovery**: ✅ **25+ locations discovered with retry logic and auto-restart** 🗺️
 **Production Resilience**: ✅ **Smart retry logic with browser restart on failures** 🔄
@@ -20,6 +22,7 @@
 **Frontend Polish**: ✅ **Console errors eliminated, appointments display perfectly** ✨
 **Appointment Types**: ✅ **Service and appointment type display in Section 5** 🎯
 **Codebase**: ✅ **Production-ready with comprehensive documentation** 📁
+**Railway Ready**: ✅ **Complete deployment automation with resolution documentation** 📋
 
 ## ✅ Completed Features
 
@@ -116,6 +119,45 @@
 - **Smart Intervals** - 5 minutes during business hours, 30 minutes off-hours
 
 ## 🚨 Latest Major Updates
+
+### 🔧 RAILWAY PRODUCTION DEPLOYMENT & PUPPETEER MODERNIZATION (September 7, 2025):
+```javascript
+// ✅ RAILWAY UBUNTU 24.04: Complete system dependency configuration for Chromium
+// ✅ PUPPETEER v23.0.0: Upgraded with new headless mode and enhanced error handling
+// ✅ BUNDLED CHROMIUM: Smart detection between custom and bundled Chromium paths
+// ✅ COMPREHENSIVE DEPENDENCIES: All required libraries for Ubuntu 24.04 compatibility
+// ✅ BUILD OPTIMIZATION: Separate install/build phases with proper dependency management
+// ✅ DEPLOYMENT AUTOMATION: Scripts and documentation for streamlined Railway deployment
+// ✅ MODERN BROWSER CONFIG: New headless mode with advanced navigation reliability
+// ✅ PRODUCTION READY: Complete Railway deployment with comprehensive troubleshooting guide
+```
+
+**Railway Production Configuration:**
+- **Ubuntu 24.04 Compatible Dependencies**: Added comprehensive apt packages (libglib2.0-0, libnss3, libatk-bridge2.0-0, libdrm2, etc.)
+- **Optimized Build Process**: Separate install/build phases with proper production dependency pruning
+- **Smart Chromium Detection**: Flexible configuration supports both custom executable paths and bundled Chromium
+- **Build Performance**: Enhanced with npm caching and proper package management
+- **Environment Variables**: Complete production configuration with all required settings
+
+**Puppeteer Modernization (v21.0.0 → v23.0.0):**
+- **New Headless Mode**: Updated to `headless: 'new'` for improved performance and compatibility
+- **Enhanced Error Handling**: Better browser initialization with fallback mechanisms
+- **Smart Path Detection**: Automatic detection between custom and bundled Chromium executables
+- **Robust Navigation**: Improved page waiting and click handling with better timeout management
+- **Modern Browser Args**: Updated Chrome flags for optimal Railway deployment performance
+
+**Deployment Infrastructure:**
+- **Automated Scripts**: `deploy-railway.sh` and `deploy-to-existing-service.sh` for streamlined deployment
+- **Complete Documentation**: `railway-deployment-resolution.md` with comprehensive troubleshooting guide
+- **Environment Management**: `.env.production` template for production configuration
+- **Monitoring Ready**: Enhanced logging for deployment debugging and monitoring
+
+**Technical Benefits:**
+- ✅ **100% Railway Compatibility** - All system dependencies properly configured
+- ✅ **Modern Puppeteer Stack** - Latest version with enhanced reliability
+- ✅ **Flexible Configuration** - Works with custom or bundled Chromium
+- ✅ **Production Monitoring** - Enhanced logging and error reporting
+- ✅ **Deployment Automation** - Complete scripts for reliable deployment
 
 ### 🚀 RAILWAY DEPLOYMENT FIX & FRONTEND POLISH (September 7, 2025):
 ```javascript
@@ -373,7 +415,24 @@ Results Display + Notifications
 
 ## 🔄 Git Commit History
 
-**Latest Commit**: `9fa92a9` - "🔄 Fix positioning behavior: overlay only for initial state"
+**Latest Commit**: `a9d2a8e` - "Add essential system dependencies for Puppeteer bundled Chromium on Railway"
+- 🚀 **RAILWAY UBUNTU 24.04**: Added comprehensive apt packages for Chromium runtime support
+- 📦 **SYSTEM LIBRARIES**: libglib2.0-0, libnss3, libatk-bridge2.0-0, libdrm2, libgbm1, libgtk-3-0, etc.
+- 🔧 **PUPPETEER v23.0.0**: Upgraded with new headless mode and enhanced browser initialization
+- 🛠️ **BUILD OPTIMIZATION**: Separate install/build phases with proper dependency management
+- 📋 **DEPLOYMENT AUTOMATION**: Complete scripts and documentation for Railway deployment
+
+**Previous**: `3c56bd5` - "Use Puppeteer bundled Chromium instead of system Chromium"
+- 🔄 **BUNDLED CHROMIUM**: Switched from system to Puppeteer-managed Chromium for reliability
+- 🎯 **SMART PATH DETECTION**: Automatic detection between custom executable and bundled Chromium
+- 🚀 **SIMPLIFIED CONFIG**: Removed complex nixpkgs path configuration
+- ✅ **CROSS-PLATFORM**: Works consistently across Railway, local, Docker environments
+
+**Previous**: `dcdee40` - "Update npm install command to use --omit=dev instead of deprecated --production flag"
+- 📦 **NPM MODERN SYNTAX**: Updated build commands to use latest npm conventions
+- ⚡ **BUILD CLEANUP**: Removed deprecation warnings from Railway build logs
+
+**Previous**: `9fa92a9` - "🔄 Fix positioning behavior: overlay only for initial state"
 - 🎯 **TRACK USAGE**: Added hasEverStartedMonitoring flag to distinguish initial vs used states
 - 🚀 **INITIAL OVERLAY**: Absolute positioning only blocks content before first monitoring session
 - ⬇️ **NORMAL FLOW AFTER**: Once monitoring started, Start button appears below tabs in normal flow

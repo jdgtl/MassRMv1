@@ -11,17 +11,13 @@ module.exports = {
     min_uptime: '10s',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: process.env.PORT || 3000
     },
     error_file: './logs/pm2-error.log',
     out_file: './logs/pm2-out.log',
     log_file: './logs/pm2-combined.log',
-    time: true,
-    // Health check configuration
-    health_check_url: 'http://localhost:3000/api/health',
-    health_check_interval: 60000, // 1 minute
-    health_check_timeout: 10000,  // 10 seconds
-    // Restart on unhealthy responses
-    restart_on_health_check_fail: true
+    time: true
+    // Note: Health check disabled for Railway deployment
+    // Railway handles health checks via the web service itself
   }]
 };

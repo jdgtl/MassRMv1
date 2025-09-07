@@ -32,9 +32,22 @@ class MinimalRMVExtractor {
             // Use most basic browser configuration possible
             logger.info('🚀 Launching browser with minimal config...');
             try {
-                this.browser = await puppeteer.launch({
-                    headless: true,  // Use old headless mode for stability
-                    args: [
+                // Check environment variables for Puppeteer configuration
+                const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+                
+                const launchOptions = {
+                    headless: 'new', // Use new headless mode
+                };
+                
+                // Only set executablePath if explicitly provided and not empty
+                if (executablePath && executablePath.trim() !== '') {
+                    launchOptions.executablePath = executablePath;
+                    logger.info(`Using custom executable path: ${executablePath}`);
+                } else {
+                    logger.info('Using Puppeteer bundled Chromium (default)');
+                }
+                
+                launchOptions.args = [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
                         '--disable-dev-shm-usage',
@@ -43,8 +56,9 @@ class MinimalRMVExtractor {
                         '--no-first-run'
                         // Removed --no-zygote and --single-process as they may cause frame detachment
                     ],
-                    timeout: 30000
-                });
+                launchOptions.timeout = 30000;
+                
+                this.browser = await puppeteer.launch(launchOptions);
                 logger.info('✅ Browser launched successfully');
             } catch (launchError) {
                 logger.error('❌ Browser launch failed:', {
@@ -59,7 +73,7 @@ class MinimalRMVExtractor {
             logger.info('✅ New page created');
             
             // Small delay to ensure browser is fully initialized
-            await page.waitForTimeout(500);
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Skip all fancy headers and user agents - keep it simple
             logger.info('📋 Loading RMV page directly...');
@@ -81,7 +95,7 @@ class MinimalRMVExtractor {
             }
             
             // Quick wait for page to settle
-            await page.waitForTimeout(1500);
+            await new Promise(resolve => setTimeout(resolve, 1500));
             
             const pageTitle = await page.title();
             logger.info(`📄 Page loaded: ${pageTitle}`);
@@ -216,7 +230,7 @@ class MinimalRMVExtractor {
             
             if (offices.length > 0) {
                 await offices[0].evaluate(el => el.click());
-                await page.waitForTimeout(2000);
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 logger.info(`✅ Office selected`);
             }
 
@@ -279,7 +293,7 @@ class MinimalRMVExtractor {
                         if (isVisible) {
                             logger.info(`🎯 Clicking appointment ${i + 1}...`);
                             await appointment.evaluate(el => el.click());
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                             appointmentSelected = true;
                             logger.info('✅ Appointment selected successfully');
                             break;
@@ -301,7 +315,7 @@ class MinimalRMVExtractor {
                         if (text && text.toLowerCase().includes('available')) {
                             logger.info(`🔄 Trying to expand: "${text.substring(0, 30)}..."`);
                             await control.evaluate(el => el.click());
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                         }
                     } catch (e) {
                         // Continue
@@ -322,7 +336,7 @@ class MinimalRMVExtractor {
                         if (isVisible) {
                             logger.info(`🎯 Clicking appointment ${i + 1} after expansion...`);
                             await appointment.evaluate(el => el.click());
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                             appointmentSelected = true;
                             logger.info('✅ Appointment selected successfully after expanding sections');
                             break;
@@ -361,7 +375,7 @@ class MinimalRMVExtractor {
                     if (isVisible && text && text.includes('next')) {
                         logger.info(`🔘 Clicking Next: "${text}"`);
                         await button.evaluate(el => el.click());
-                        await page.waitForTimeout(2000);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                         break;
                     }
                 } catch (e) {
@@ -390,10 +404,10 @@ class MinimalRMVExtractor {
                 () => document.readyState === 'complete',
                 { timeout: timeout }
             );
-            await page.waitForTimeout(800); // Minimum safe delay
+            await new Promise(resolve => setTimeout(resolve, 800)); // Minimum safe delay
         } catch (timeoutError) {
             // Fallback to short fixed wait if DOM never settles
-            await page.waitForTimeout(1200);
+            await new Promise(resolve => setTimeout(resolve, 1200));
         }
     }
 

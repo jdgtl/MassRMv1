@@ -60,11 +60,26 @@ const service = {
         browser: null,
         async initialize() {
             try {
-                logger.info('Using Puppeteer bundled Chromium (default)');
+                // Check environment variables for Puppeteer configuration
+                const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+                const skipDownload = process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD;
                 
-                this.browser = await puppeteer.launch({
-                    headless: true,
-                    args: [
+                if (executablePath && executablePath.trim() !== '') {
+                    logger.info(`Using custom executable path: ${executablePath}`);
+                } else {
+                    logger.info('Using Puppeteer bundled Chromium (default)');
+                }
+                
+                const launchOptions = {
+                    headless: 'new', // Use new headless mode
+                };
+                
+                // Only set executablePath if explicitly provided and not empty
+                if (executablePath && executablePath.trim() !== '') {
+                    launchOptions.executablePath = executablePath;
+                }
+                
+                launchOptions.args = [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
                         '--disable-dev-shm-usage',
@@ -90,9 +105,10 @@ const service = {
                         '--single-process',
                         '--disable-blink-features=AutomationControlled'
                     ],
-                    ignoreDefaultArgs: ['--enable-automation'],
-                    defaultViewport: null
-                });
+                launchOptions.ignoreDefaultArgs = ['--enable-automation'];
+                launchOptions.defaultViewport = null;
+                
+                this.browser = await puppeteer.launch(launchOptions);
                 logger.info('Puppeteer browser initialized');
                 
                 // Add browser warm-up period to prevent first-attempt failures
@@ -115,14 +131,14 @@ const service = {
             const page = await this.browser.newPage();
             const appointments = [];
             
-            // Set user agent to avoid detection
+            // Set user agent to avoid detection  
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
             
             try {
                 // STEP 1: Navigate to initial URL and extract office list
                 logger.info('STEP 1: Navigating to RMV booking page and loading office list...');
                 await page.goto(fullUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-                await page.waitForTimeout(3000);
+                await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 // Extract location data and offices
                 const rmvData = await page.evaluate(() => {
@@ -189,7 +205,7 @@ const service = {
                     try {
                         // Click on the office location
                         const locationSelector = `.QflowObjectItem[data-id="${office.dataId}"]`;
-                        await page.waitForSelector(locationSelector, { timeout: 5000 });
+                        await page.locator(locationSelector).wait();
                         
                         // More robust clicking with error handling
                         try {
@@ -206,12 +222,12 @@ const service = {
                         }
                         
                         // Wait for navigation with more robust waiting
-                        await new Promise(resolve => setTimeout(resolve, 3000)); // Give time for navigation
+                        await page.waitForDelay(3000); // Give time for navigation
                         
                         try {
                             await Promise.race([
                                 page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }),
-                                page.waitForSelector('.ServiceAppointmentDateTime[data-datetime]', { timeout: 15000 }),
+                                page.locator('.ServiceAppointmentDateTime[data-datetime]').wait(),
                                 new Promise(resolve => setTimeout(resolve, 10000)) // Fallback timeout
                             ]);
                         } catch (navError) {
@@ -309,7 +325,7 @@ const service = {
                         // Go back to office selection for next office
                         if (matchedOffices.length > 1) {
                             await page.goBack();
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                         }
                         
                     } catch (officeError) {
@@ -318,7 +334,7 @@ const service = {
                         // Try to recover by going back to the main URL
                         try {
                             await page.goto(fullUrl, { waitUntil: 'networkidle0', timeout: 15000 });
-                            await page.waitForTimeout(2000);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                         } catch (recoverError) {
                             logger.error(`Recovery failed: ${recoverError.message}`);
                         }

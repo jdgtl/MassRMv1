@@ -16,7 +16,7 @@ class RMVUserDataExtractor {
             this.logger.info('Attempting to extract user data from RMV page...');
 
             // Wait for the page to load completely
-            await page.waitForTimeout(2000);
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             // Try multiple extraction strategies
             const userData = await page.evaluate(() => {

@@ -60,21 +60,11 @@ const service = {
         browser: null,
         async initialize() {
             try {
-                // Find chromium executable dynamically
-                const { execSync } = require('child_process');
-                let chromiumPath;
-                try {
-                    chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH || execSync('which chromium', { encoding: 'utf8' }).trim();
-                } catch (error) {
-                    logger.warn('Could not find chromium with which command, trying fallback paths...');
-                    chromiumPath = '/usr/bin/chromium'; // fallback
-                }
-                
-                logger.info(`Using chromium at: ${chromiumPath}`);
+                logger.info(`Using chromium at: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'default'}`);
                 
                 this.browser = await puppeteer.launch({
                     headless: true,
-                    executablePath: chromiumPath,
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',

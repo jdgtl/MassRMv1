@@ -62,7 +62,7 @@ const service = {
             try {
                 this.browser = await puppeteer.launch({
                     headless: true,
-                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',

@@ -1417,6 +1417,19 @@
                 <span class="status-badge status-inactive" id="monitorStatus">INACTIVE</span>
             </div>
             
+            <!-- NEW: Appointment Type Information Banner -->
+            <div class="appointment-type-banner" id="appointmentTypeBanner" style="display: none;">
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e8 100%); border: 2px solid #4fc3f7; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">🎯</span>
+                        <div>
+                            <div style="font-weight: 600; color: #1565c0; margin-bottom: 4px;" id="appointmentService">Loading appointment type...</div>
+                            <div style="font-size: 0.9em; color: #2e7d32;" id="appointmentTypeDetails">Verifying appointment details...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Instructions + Tab Controls in same row -->
             <div class="section-header-controls" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <div class="section-instructions" style="flex: 1; margin-right: 20px;">
@@ -1499,7 +1512,7 @@
                                     <span>Preferred appointments available</span>
                                 </div>
                             </div>
-                            <div class="calendar-grid">
+                            <div id="calendarGrid" class="calendar-grid">
                                 <div class="calendar-weekday-headers">
                                     <div class="calendar-weekday-header">Sun</div>
                                     <div class="calendar-weekday-header">Mon</div>
@@ -2769,21 +2782,7 @@
                             stats.available = mySession.appointmentsFound;
                             updateStats();
                             
-                            // Hide loading state and show results
-                            const loadingEl = document.getElementById('appointmentsLoading');
-                            const listEl = document.getElementById('appointmentsList');
-                            
-                            if (loadingEl) {
-                                loadingEl.style.display = 'none';
-                            } else {
-                                console.warn('appointmentsLoading element not found');
-                            }
-                            
-                            if (listEl) {
-                                listEl.style.display = 'block';
-                            } else {
-                                console.warn('appointmentsList element not found');
-                            }
+                            // displayAppointments() handles all view switching and DOM manipulation
                         }
                     } else if (mySession && mySession.appointmentsFound === 0) {
                         // Only show "no appointments" if the session has actually been checked (has lastChecked timestamp)
@@ -3714,7 +3713,12 @@
                 </div>`;
             }
 
-            document.getElementById('calendarGrid').innerHTML = calendarHTML;
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (calendarGrid) {
+                calendarGrid.innerHTML = calendarHTML;
+            } else {
+                console.warn('Calendar grid element not found - calendar view may not be active');
+            }
         }
 
         function getDayAppointments(dateString) {
@@ -4023,6 +4027,15 @@
                     serviceCenters = discoveredServiceCenters;
                     isUsingDynamicLocations = true;
                     
+                    // Store appointment information for Section 5 display
+                    if (data.appointmentInfo) {
+                        window.currentAppointmentInfo = data.appointmentInfo;
+                        console.log('📋 Appointment Info captured:', data.appointmentInfo);
+                        
+                        // Update the appointment type display
+                        updateAppointmentTypeDisplay();
+                    }
+                    
                     // Clear selections and repopulate
                     selectedCenters.clear();
                     populateServiceCenters();
@@ -4072,6 +4085,26 @@
                 }
                 isDiscovering = false; // Clear flag in both success and error cases
                 console.log('✅ Discovery flag cleared, isDiscovering =', isDiscovering);
+            }
+        }
+
+        // Function to update appointment type display
+        function updateAppointmentTypeDisplay() {
+            if (window.currentAppointmentInfo) {
+                const banner = document.getElementById('appointmentTypeBanner');
+                const serviceElement = document.getElementById('appointmentService');
+                const detailsElement = document.getElementById('appointmentTypeDetails');
+                
+                if (banner && serviceElement && detailsElement) {
+                    // Update the display text
+                    serviceElement.textContent = window.currentAppointmentInfo.service || 'Service information not available';
+                    detailsElement.textContent = `Appointment Type: ${window.currentAppointmentInfo.appointmentType || 'Not specified'}`;
+                    
+                    // Show the banner
+                    banner.style.display = 'block';
+                    
+                    console.log('✅ Appointment type banner updated and shown');
+                }
             }
         }
         

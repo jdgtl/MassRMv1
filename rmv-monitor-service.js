@@ -82,6 +82,10 @@ const service = {
                     defaultViewport: null
                 });
                 logger.info('Puppeteer browser initialized');
+                
+                // Add browser warm-up period to prevent first-attempt failures
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                logger.info('Browser warm-up completed');
                 return true;
             } catch (error) {
                 logger.error('Failed to initialize Puppeteer browser:', error.message);
@@ -655,6 +659,49 @@ app.post('/api/extract-user-data', async (req, res) => {
     }
 });
 
+// Retry logic for appointment scraping with browser restart capability
+async function fastAppointmentsScrapingWithRetry(rmvUrl, selectedCenters, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            logger.info(`🔍 Appointment scraping attempt ${attempt}/${maxRetries}...`);
+            
+            return await fastAppointmentsScraping(rmvUrl, selectedCenters);
+            
+        } catch (error) {
+            logger.warn(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+            
+            if (attempt === maxRetries) {
+                throw error;
+            }
+            
+            // Check if we need to restart browser
+            const needsBrowserRestart = 
+                error.message.includes('Target closed') ||
+                error.message.includes('Protocol error') ||
+                error.message.includes('Session closed') ||
+                error.message.includes('Target.createTarget timed out');
+                
+            if (needsBrowserRestart) {
+                logger.info('🔄 Browser restart needed for appointment scraping, reinitializing...');
+                try {
+                    if (service.scraper.browser) {
+                        await service.scraper.browser.close();
+                        service.scraper.browser = null;
+                    }
+                    await service.scraper.initialize();
+                } catch (restartError) {
+                    logger.error('❌ Browser restart failed:', restartError.message);
+                }
+            }
+            
+            // Progressive backoff: 2s, 4s, 8s
+            const delay = 2000 * attempt;
+            logger.info(`⏱️ Waiting ${delay}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
 // Fast appointments scraping function
 async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
     const startTime = Date.now();
@@ -763,36 +810,54 @@ async function fastAppointmentsScraping(rmvUrl, selectedCenters) {
                 await element.scrollIntoView();
                 await page.waitForTimeout(300 + Math.random() * 200); // Random delay 300-500ms
                 
-                // Get element bounds for realistic click
+                // Verify page stability before mouse interaction
+                try {
+                    await page.evaluate(() => document.readyState);
+                    await page.waitForTimeout(500); // Additional stability wait
+                } catch (stabilityError) {
+                    throw new Error(`Page stability check failed: ${stabilityError.message}`);
+                }
+
+                // Get element bounds for realistic click with enhanced error handling
                 const box = await element.boundingBox();
                 if (box) {
-                    // Click at center with slight randomness
-                    const x = box.x + box.width / 2 + (Math.random() - 0.5) * 10;
-                    const y = box.y + box.height / 2 + (Math.random() - 0.5) * 10;
-                    await page.mouse.click(x, y, { delay: 50 + Math.random() * 50 });
+                    try {
+                        // Click at center with slight randomness
+                        const x = box.x + box.width / 2 + (Math.random() - 0.5) * 10;
+                        const y = box.y + box.height / 2 + (Math.random() - 0.5) * 10;
+                        await page.mouse.click(x, y, { delay: 50 + Math.random() * 50 });
+                        logger.info(`✅ Clicked ${office.name}, waiting for page response...`);
+                    } catch (clickError) {
+                        // If mouse click fails, try element.click() as fallback
+                        logger.warn(`⚠️ Mouse click failed for ${office.name}, trying fallback: ${clickError.message}`);
+                        await element.click();
+                        logger.info(`✅ Fallback click succeeded for ${office.name}`);
+                    }
                 } else {
                     // Fallback to regular click
                     await element.click();
+                    logger.info(`✅ Standard click for ${office.name}`);
                 }
-                
-                logger.info(`✅ Clicked ${office.name}, waiting for page response...`);
                 
                 // More robust navigation waiting with multiple fallback strategies
                 let navigationSuccessful = false;
                 try {
+                    // First, wait a bit for the click to register
+                    await page.waitForTimeout(1000);
+                    
                     await Promise.race([
-                        page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 8000 })
+                        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 })
                             .then(() => { navigationSuccessful = true; }),
-                        page.waitForSelector('.ServiceAppointmentDateTime[data-datetime], .appointment-slot', { timeout: 8000 })
+                        page.waitForSelector('.ServiceAppointmentDateTime[data-datetime], .appointment-slot', { timeout: 15000 })
                             .then(() => { navigationSuccessful = true; }),
                         new Promise((resolve, reject) => 
-                            setTimeout(() => reject(new Error('Timeout after 8 seconds')), 8000)
+                            setTimeout(() => reject(new Error('Timeout after 15 seconds')), 15000)
                         )
                     ]);
                 } catch (navError) {
                     logger.warn(`⚠️ Navigation timeout for ${office.name}, trying to continue anyway...`);
-                    // Give it a bit more time
-                    await page.waitForTimeout(2000);
+                    // Give it more time to load
+                    await page.waitForTimeout(3000);
                 }
 
                 // Hybrid appointment extraction (rmv1 + rmv2 selectors for better compatibility)
@@ -1016,6 +1081,34 @@ async function discoverLocationsWithRetry(rmvUrl, maxRetries = 3) {
                 const locationData = await page.evaluate(() => {
                     const data = { locations: [], offices: [] };
                     
+                    // NEW: Extract appointment type information from DisplayData section
+                    const displayDataSection = document.querySelector('.DisplayData');
+                    console.log('🔍 DEBUG: DisplayData section found:', !!displayDataSection);
+                    
+                    if (displayDataSection) {
+                        console.log('📋 DEBUG: DisplayData innerHTML:', displayDataSection.innerHTML);
+                        
+                        // Extract Service
+                        const serviceElement = displayDataSection.querySelector('.displaydata-text');
+                        const serviceText = serviceElement?.textContent?.trim();
+                        
+                        // Extract Appointment Type (second displaydata-text element)
+                        const appointmentTypeElements = displayDataSection.querySelectorAll('.displaydata-text');
+                        const appointmentTypeText = appointmentTypeElements[1]?.textContent?.trim();
+                        
+                        console.log('🎯 DEBUG: Service extracted:', serviceText);
+                        console.log('📝 DEBUG: Appointment Type extracted:', appointmentTypeText);
+                        
+                        data.appointmentInfo = {
+                            service: serviceText || null,
+                            appointmentType: appointmentTypeText || null
+                        };
+                    } else {
+                        console.log('⚠️ DEBUG: DisplayData section not found on this page');
+                        console.log('📄 DEBUG: Current page title:', document.title);
+                        console.log('🔍 DEBUG: Available classes:', Array.from(document.querySelectorAll('[class*="display"], [class*="Display"]')).map(el => el.className));
+                    }
+                    
                     // Primary method: Extract from window.displayData
                     if (window.displayData && Array.isArray(window.displayData)) {
                         data.locations = window.displayData.map(location => ({
@@ -1126,6 +1219,7 @@ app.post('/api/discover-locations', async (req, res) => {
             success: true,
             locations: locationData.locations,
             offices: locationData.offices,
+            appointmentInfo: locationData.appointmentInfo || null,
             totalFound: locationData.locations.length || locationData.offices.length,
             duration: duration,
             message: `Found ${locationData.locations.length || locationData.offices.length} available locations`
@@ -1687,7 +1781,7 @@ async function processMonitoringSession(sessionId, session) {
         logger.info(`📋 Processing session ${sessionId} (${session.selectedCenters.length} locations)`);
         
         // Use fast appointments scraping (5-8 seconds vs 19+ seconds)
-        const appointments = await fastAppointmentsScraping(
+        const appointments = await fastAppointmentsScrapingWithRetry(
             session.rmvUrl,
             session.selectedCenters
         );

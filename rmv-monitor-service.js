@@ -222,7 +222,7 @@ const service = {
                         }
                         
                         // Wait for navigation with more robust waiting
-                        await page.waitForDelay(3000); // Give time for navigation
+                        await new Promise(resolve => setTimeout(resolve, 3000)); // Give time for navigation
                         
                         try {
                             await Promise.race([

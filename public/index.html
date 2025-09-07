@@ -1664,15 +1664,15 @@
                     if (locationName.match(/Martha.*Vineyard|Nantucket/i)) {
                         regions.islands.push(locationName);
                     }
-                    // Boston Metro (within ~25 miles of Boston)
-                    else if ((lat >= 42.1 && lat <= 42.6 && lng >= -71.3 && lng <= -70.8) ||
-                        locationName.match(/Boston|Cambridge|Watertown|Braintree|Quincy|Newton/i)) {
-                        regions.boston.push(locationName);
-                    }
-                    // North Shore (north of Boston, closer to coast)
+                    // North Shore (north of Boston, closer to coast) - CHECK FIRST to prevent overlap
                     else if ((lat >= 42.4 && lng >= -71.2) ||
                         locationName.match(/Danvers|Lawrence|Haverhill|Lowell|Wilmington|Lynn|Salem|Peabody|Methuen|Everett/i)) {
                         regions.north.push(locationName);
+                    }
+                    // Boston Metro (within ~25 miles of Boston, but exclude North Shore)
+                    else if ((lat >= 42.1 && lat <= 42.6 && lng >= -71.3 && lng <= -70.8) ||
+                        locationName.match(/Boston|Cambridge|Watertown|Braintree|Quincy|Newton/i)) {
+                        regions.boston.push(locationName);
                     }
                     // South Shore (south of Boston, but exclude islands)
                     else if ((lat <= 42.2 && lng >= -71.2 && !locationName.match(/Martha.*Vineyard|Nantucket/i)) ||

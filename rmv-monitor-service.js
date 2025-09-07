@@ -62,11 +62,13 @@ const service = {
             try {
                 this.browser = await puppeteer.launch({
                     headless: true,
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
                         '--disable-dev-shm-usage',
-                        '--disable-blink-features=AutomationControlled',
+                        '--disable-gpu',
+                        '--disable-web-security',
                         '--disable-features=VizDisplayCompositor',
                         '--disable-background-networking',
                         '--disable-background-timer-throttling',
@@ -76,7 +78,16 @@ const service = {
                         '--disable-ipc-flooding-protection',
                         '--no-default-browser-check',
                         '--no-first-run',
-                        '--disable-default-apps'
+                        '--disable-default-apps',
+                        '--disable-extensions',
+                        '--disable-plugins',
+                        '--disable-sync',
+                        '--disable-translate',
+                        '--hide-scrollbars',
+                        '--mute-audio',
+                        '--no-zygote',
+                        '--single-process',
+                        '--disable-blink-features=AutomationControlled'
                     ],
                     ignoreDefaultArgs: ['--enable-automation'],
                     defaultViewport: null
@@ -1829,17 +1840,25 @@ function startMonitoringCycle() {
 // Start the server
 async function startServer() {
     try {
-        // Initialize browser for scraping
-        await service.scraper.initialize();
-        
-        app.listen(config.port, () => {
+        // Start HTTP server immediately for Railway health checks
+        app.listen(config.port, async () => {
             logger.info('Starting RMV Monitor Service...');
-            logger.info(`RMV Monitor Service started successfully`);
             logger.info(`API Server running on port ${config.port}`);
             logger.info(`Service will expire on ${config.expireDate.toLocaleDateString()}`);
             
-            // Start monitoring cycle
-            startMonitoringCycle();
+            try {
+                // Initialize browser for scraping after server is running
+                logger.info('Initializing Puppeteer browser...');
+                await service.scraper.initialize();
+                logger.info('RMV Monitor Service started successfully');
+                
+                // Start monitoring cycle
+                startMonitoringCycle();
+            } catch (browserError) {
+                logger.error('Failed to initialize browser, but server is running:', browserError);
+                // Server continues running even if browser initialization fails
+                // This allows the service to be accessible for debugging
+            }
         });
     } catch (error) {
         logger.error('Failed to start server:', error);

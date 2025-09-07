@@ -1,10 +1,17 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "chromium"]
+nixPkgs = ["nodejs_18", "chromium", "fontconfig", "freetype", "libx11", "libxcomposite", "libxdamage", "libxext", "libxfixes", "libxrandr", "libxrender", "libxss", "libxtst", "ca-certificates", "fonts-liberation", "libnss3", "lsb-release", "xdg-utils", "libatspi2.0-0", "libdrm2", "libxkbcommon0", "libxshmfence1"]
 
-[phases.install]
+[phases.install] 
 cmds = ["npm ci --production"]
+
+[phases.build]
+cmds = ["echo 'Build phase complete'"]
+
+[start]
+cmd = "npm start"
 
 [variables]
 NODE_ENV = "production"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
 PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
+DISPLAY = ":99"

@@ -60,11 +60,10 @@ const service = {
         browser: null,
         async initialize() {
             try {
-                logger.info(`Using chromium at: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'default'}`);
+                logger.info('Using Puppeteer bundled Chromium (default)');
                 
                 this.browser = await puppeteer.launch({
                     headless: true,
-                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',

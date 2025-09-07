@@ -1,10 +1,8 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "chromium"]
+nixPkgs = ["nodejs_18"]
 
 [phases.install]
 cmds = ["npm ci --omit=dev"]
 
 [variables]
 NODE_ENV = "production"
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-PUPPETEER_EXECUTABLE_PATH = "/root/.nix-profile/bin/chromium"

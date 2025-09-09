@@ -194,10 +194,21 @@
             background: #dc2626;
         }
 
-        .controls-container {
+        .controls-header {
             display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
             gap: 20px;
-            margin: 20px 0 15px 0;
+        }
+
+        .control-group-left {
+            flex: 1;
+        }
+
+        .control-group-right {
+            flex-shrink: 0;
         }
 
         .regional-container {
@@ -217,9 +228,13 @@
             font-size: 0.75rem;
             color: #6b7280;
             text-align: left;
-            margin-top: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.025em;
+        }
+
+        .control-group-right .control-label {
+            text-align: right;
         }
 
         .sort-filter-buttons {
@@ -271,14 +286,14 @@
         }
 
         .btn-region {
-            padding: 8px 16px;
-            border: 2px solid #e0e0e0;
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
             background: white;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
         .btn-region:hover {
@@ -892,9 +907,22 @@
                 grid-template-columns: 1fr;
             }
 
-            .controls-container {
+            .controls-header {
                 flex-direction: column;
                 gap: 15px;
+            }
+
+            .control-group-left,
+            .control-group-right {
+                width: 100%;
+            }
+
+            .control-group-right .control-label {
+                text-align: left !important;
+            }
+
+            .control-group-right .sort-filter-buttons {
+                justify-content: flex-start !important;
             }
 
             .sort-container {
@@ -1303,26 +1331,26 @@
                 </button>
             </div>
 
-            <div class="controls-container">
-                <div class="regional-container">
+            <div class="controls-header">
+                <div class="control-group-left">
+                    <div class="control-label">Region</div>
                     <div class="regional-buttons" id="regionalButtons">
-                        <button class="btn-region" onclick="selectRegion('boston')">Boston Metro</button>
-                        <button class="btn-region" onclick="selectRegion('worcester')">Central MA</button>
-                        <button class="btn-region" onclick="selectRegion('springfield')">Western MA</button>
+                        <button class="btn-region" onclick="selectRegion('boston')">Boston</button>
+                        <button class="btn-region" onclick="selectRegion('worcester')">Central</button>
+                        <button class="btn-region" onclick="selectRegion('springfield')">Western</button>
                         <button class="btn-region" onclick="selectRegion('north')">North Shore</button>
                         <button class="btn-region" onclick="selectRegion('south')">South Shore</button>
                         <button class="btn-region" onclick="selectRegion('islands')">Islands</button>
                         <button class="btn-region btn-clear" onclick="selectRegion('none')">Clear</button>
                     </div>
-                    <div class="control-label">Region</div>
                 </div>
 
-                <div class="sort-container">
-                    <div class="sort-filter-buttons">
+                <div class="control-group-right">
+                    <div class="control-label">Sort</div>
+                    <div class="sort-filter-buttons" style="justify-content: flex-end;">
                         <button class="btn-sort active" id="sortAlphabetical" onclick="setSortMode('alphabetical')">A to Z</button>
                         <button class="btn-sort" id="sortDistance" onclick="setSortMode('distance')">Distance</button>
                     </div>
-                    <div class="control-label">Sort</div>
                 </div>
             </div>
 
@@ -1367,9 +1395,9 @@
                     <div class="time-display" id="startTimeDisplay">9:00 AM</div>
                 </div>
                 <div class="time-slider-group">
-                    <label for="endTimeSlider">Latest Time (9:10 AM - 5:00 PM)</label>
-                    <input type="range" id="endTimeSlider" class="time-slider" min="55" max="102" value="102" step="1">
-                    <div class="time-display" id="endTimeDisplay">5:00 PM</div>
+                    <label for="endTimeSlider">Latest Time (9:10 AM - 6:00 PM)</label>
+                    <input type="range" id="endTimeSlider" class="time-slider" min="55" max="108" value="108" step="1">
+                    <div class="time-display" id="endTimeDisplay">6:00 PM</div>
                 </div>
             </div>
         </div>
@@ -3594,6 +3622,15 @@
         // Initialize on load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM Content Loaded');
+            
+            // Check for debug mode in URL hash
+            if (window.location.hash === '#debug') {
+                console.log('🐛 Debug mode enabled - showing all sections');
+                document.querySelectorAll('.sections-hidden').forEach(section => {
+                    section.classList.remove('sections-hidden');
+                });
+                addLog('🐛 Debug mode activated - all sections visible', 'info');
+            }
             
             // Clear any old monitoring sessions on page load/refresh
             clearOldSessions();

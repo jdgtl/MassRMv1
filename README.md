@@ -71,7 +71,7 @@ open http://localhost:3000
 
 ### ⏰ Flexible Time Preferences
 - **Date Range**: 30-day default window with custom selection
-- **Time Sliders**: Visual time range selection (9 AM - 5 PM)
+- **Time Sliders**: Visual time range selection (9 AM - 6 PM)
 - **Smart Validation**: Prevents invalid time combinations
 
 ### 🔔 Multi-Channel Notifications

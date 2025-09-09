@@ -51,7 +51,7 @@
 
 ### 🕐 Section 3: Time Preferences
 - **Date Range Selection**: Start/end date pickers with 30-day default
-- **Time Sliders**: Visual time range selection (9 AM - 5 PM)
+- **Time Sliders**: Visual time range selection (9 AM - 6 PM)
 - **Smart Validation**: Ensures start time doesn't exceed end time
 
 ### 🔔 Section 4: Notification Settings

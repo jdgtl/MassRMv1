@@ -751,10 +751,33 @@ app.post('/api/extract-personal-data', async (req, res) => {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         logger.error('Fast extraction failed:', error.message);
         
-        res.status(500).json({
-            error: error.message,
-            duration: duration
-        });
+        // Handle specific extraction failures with better user feedback
+        if (error.message.includes('No appointment selected - cannot proceed')) {
+            res.json({
+                success: false,
+                personalData: {
+                    error: 'No appointments available',
+                    extractionMethod: 'failed_no_appointments',
+                    extractionTimestamp: new Date().toISOString()
+                },
+                duration: duration
+            });
+        } else if (error.message.includes('Execution context was destroyed')) {
+            res.json({
+                success: false,
+                personalData: {
+                    error: 'Page navigation interrupted',
+                    extractionMethod: 'failed_navigation_timeout',
+                    extractionTimestamp: new Date().toISOString()
+                },
+                duration: duration
+            });
+        } else {
+            res.status(500).json({
+                error: error.message,
+                duration: duration
+            });
+        }
     }
 });
 

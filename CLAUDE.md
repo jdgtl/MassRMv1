@@ -2,7 +2,7 @@
 
 ## 🎯 Current System Status: **PRODUCTION-HARDENED WITH RESILIENCE** 🏆
 
-**Last Updated**: September 8, 2025  
+**Last Updated**: September 9, 2025  
 **Server Status**: Production server with advanced resilience features on `http://localhost:3000`  
 **Railway Deployment**: ✅ **FULLY CONFIGURED WITH UBUNTU 24.04 SYSTEM DEPENDENCIES** 🚀
 **Puppeteer Modern**: ✅ **Upgraded to v23.0.0 with new headless mode and bundled Chromium** 🔧
@@ -126,6 +126,39 @@
 - **Smart Intervals** - 5 minutes during business hours, 30 minutes off-hours
 
 ## 🚨 Latest Major Updates
+
+### 🐛 CRITICAL PERSONAL DATA EXTRACTION FIX + CODEBASE REORGANIZATION (September 9, 2025):
+```javascript
+// ✅ PERSONAL DATA EXTRACTION FIXED: Removed incorrect :not(.disabled) filter blocking appointments
+// ✅ FILE RENAMING COMPLETE: All files renamed to accurately describe their actual functions  
+// ✅ PACKAGE.JSON UPDATED: Server start command now reflects renamed files (npm start)
+// ✅ IMPORT REFERENCES FIXED: All module imports updated throughout codebase
+// ✅ ROOT CAUSE IDENTIFIED: Speculation-based coding caused week-long debugging session
+```
+
+**Critical Fix Applied:**
+- **Root Cause**: Personal data extraction was using `.ServiceAppointmentDateTime[data-datetime]:not(.disabled)` which excluded ALL appointments
+- **Working System**: Appointment monitoring successfully found 95+ appointments using `.ServiceAppointmentDateTime[data-datetime]` (without filter)
+- **Issue**: The `.disabled` class was pure assumption and doesn't exist on RMV pages - caused 0 appointments found vs 95+ appointments available
+- **Fix Applied**: Removed `:not(.disabled)` filter from all 4 occurrences in personal data extraction logic
+
+**File Renaming Complete:**
+- **`rmv-monitor-service.js`** → **`rmv-api-server.js`** (Main API server with all endpoints)
+- **`rmv-extractor-minimal.js`** → **`rmv-personal-data-extractor.js`** (Personal data extraction through appointment flow)
+- **`rmv-user-data-extractor.js`** → **`rmv-appointment-scraper.js`** (Bulk appointment scraping across service centers)
+- **Updated**: All import statements, package.json main/scripts, and documentation
+
+**Technical Implementation:**
+- **Fixed Selectors**: All appointment detection now uses consistent `.ServiceAppointmentDateTime[data-datetime]` selector
+- **Server Start**: Updated to `npm start` (runs `node rmv-api-server.js`)
+- **Import Consistency**: All module references updated throughout codebase
+- **File Purpose Clarity**: Names now accurately reflect actual functionality
+
+**Prevention Measures:**
+- **Evidence-Based Development**: Require proof of DOM elements before using selectors  
+- **Code Diff Reviews**: Question any additions not explicitly requested
+- **Critical Path Testing**: Test core functionality immediately after any changes
+- **Stop Speculation**: Demand facts over assumptions for all technical decisions
 
 ### 🔒 PII-GATED PROGRESSIVE DISCLOSURE (September 8, 2025):
 ```javascript
@@ -403,15 +436,15 @@ Results Display + Notifications
 - CSS animations and responsive design built-in
 
 ### Backend:
-- `rmv-monitor-service.js` - **ACTIVE** Production server with all APIs including location discovery
-- `rmv-extractor-minimal.js` - Fast personal data extraction (9.8s average)
-- `rmv-user-data-extractor.js` - Enhanced scraper classes with anti-detection
+- `rmv-api-server.js` - **ACTIVE** Production server with all APIs including location discovery (renamed from rmv-monitor-service.js)
+- `rmv-personal-data-extractor.js` - Fast personal data extraction through appointment flow (9.8s average, renamed from rmv-extractor-minimal.js)
+- `rmv-appointment-scraper.js` - Enhanced scraper classes for bulk appointment extraction (renamed from rmv-user-data-extractor.js)
 - `notification-service.js` - Email/SMS notification handling
 
 ### Configuration:
-- `package.json` - **UPDATED** Dependencies and scripts optimized for production
+- `package.json` - **UPDATED** Dependencies and scripts optimized for production, main entry point updated to rmv-api-server.js
 - `nixpacks.toml` - **CRITICAL** Railway deployment configuration with Chromium dependencies
-- `Procfile` - **CRITICAL** Railway process definition (`web: npm start`)
+- `Procfile` - **CRITICAL** Railway process definition (`web: npm start` → runs `node rmv-api-server.js`)
 - `ecosystem.config.js` - PM2 production deployment configuration
 - `DEVELOPMENT.md` - Git workflow and development guide
 - `README.md` - **UPDATED** Project overview with new features

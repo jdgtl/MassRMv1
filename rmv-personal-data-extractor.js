@@ -237,61 +237,28 @@ class MinimalRMVExtractor {
             // Step 2: Select appointment
             logger.info('⏰ Selecting appointment...');
             
-            // Smart expansion: only expand sections with appointment indicators
-            const timeControls = await page.$$('.DateTimeGrouping-Control');
-            logger.info(`🔍 Found ${timeControls.length} time period controls`);
+            // Look for appointments in DateTimeGrouping-Container (all appointments are in DOM)
+            const appointmentContainers = await page.$$('.DateTimeGrouping-Container');
+            logger.info(`🔍 Found ${appointmentContainers.length} appointment containers`);
             
-            // Quick pre-check for already visible appointments
-            let visibleCheck = await page.$$eval('.ServiceAppointmentDateTime[data-datetime]:not(.disabled)', 
-                elements => elements.filter(el => el.offsetParent !== null).length);
+            // Count all appointments across all containers
+            const allAppointments = await page.$$('.ServiceAppointmentDateTime');
+            logger.info(`📅 Found ${allAppointments.length} total appointment slots`);
             
-            if (visibleCheck === 0) {
-                // Only expand if no appointments are visible
-                for (let i = 0; i < Math.min(timeControls.length, 3); i++) {
-                    try {
-                        const control = timeControls[i];
-                        const text = await control.evaluate(el => el.textContent);
-                        
-                        // Only expand sections that mention "available" and contain numbers
-                        if (text && text.toLowerCase().includes('available') && /\d+/.test(text)) {
-                            logger.info(`🌅 Expanding promising section ${i + 1}: "${text.substring(0, 30)}"`);
-                            await control.evaluate(el => el.click());
-                            
-                            // Wait for DOM change instead of fixed timeout
-                            await this.waitForDOMChange(page, 3000);
-                            
-                            visibleCheck = await page.$$eval('.ServiceAppointmentDateTime[data-datetime]:not(.disabled)', 
-                                elements => elements.filter(el => el.offsetParent !== null).length);
-                            logger.info(`📊 Visible appointments after expansion: ${visibleCheck}`);
-                            
-                            if (visibleCheck > 0) {
-                                logger.info('✅ Found appointments - stopping expansion');
-                                break;
-                            }
-                        }
-                    } catch (e) {
-                        logger.warn(`⚠️ Failed to expand section ${i + 1}: ${e.message}`);
-                    }
-                }
-            } else {
-                logger.info(`✅ Found ${visibleCheck} appointments already visible - skipping expansion`);
-            }
-
             // Now select first available appointment
             let appointmentSelected = false;
-            const appointments = await page.$$('.ServiceAppointmentDateTime[data-datetime]:not(.disabled)');
-            logger.info(`📅 Found ${appointments.length} appointment slots`);
             
-            if (appointments.length > 0) {
+            if (allAppointments.length > 0) {
                 // Try multiple appointments until one works
-                for (let i = 0; i < Math.min(appointments.length, 5); i++) {
+                for (let i = 0; i < Math.min(allAppointments.length, 5); i++) {
                     try {
-                        const appointment = appointments[i];
+                        const appointment = allAppointments[i];
+                        const ariaLabel = await appointment.evaluate(el => el.getAttribute('aria-label'));
                         const isVisible = await appointment.evaluate(el => el.offsetParent !== null);
-                        logger.info(`📋 Appointment ${i + 1}: visible=${isVisible}`);
+                        logger.info(`📋 Appointment ${i + 1}: "${ariaLabel}" visible=${isVisible}`);
                         
                         if (isVisible) {
-                            logger.info(`🎯 Clicking appointment ${i + 1}...`);
+                            logger.info(`🎯 Clicking appointment ${i + 1}: "${ariaLabel}"...`);
                             await appointment.evaluate(el => el.click());
                             await new Promise(resolve => setTimeout(resolve, 2000));
                             appointmentSelected = true;
@@ -304,46 +271,40 @@ class MinimalRMVExtractor {
                 }
             }
 
-            if (!appointmentSelected) {
-                logger.warn('⚠️ No appointment was selected - may need to expand more sections');
+            // Check for pagination if no appointments were found or selected
+            if (!appointmentSelected && allAppointments.length === 0) {
+                logger.info('🔍 No appointments found, checking for pagination...');
+                const nextPageButton = await page.$('.paginate-action-container.next a');
                 
-                // Try expanding any other expandable sections
-                const allExpandable = await page.$$('.DateTimeGrouping-Control, [class*="expand"], [class*="toggle"]');
-                for (const control of allExpandable.slice(0, 3)) {
-                    try {
-                        const text = await control.evaluate(el => el.textContent);
-                        if (text && text.toLowerCase().includes('available')) {
-                            logger.info(`🔄 Trying to expand: "${text.substring(0, 30)}..."`);
-                            await control.evaluate(el => el.click());
-                            await new Promise(resolve => setTimeout(resolve, 2000));
+                if (nextPageButton) {
+                    logger.info('📄 Found next page button, clicking to load more appointments...');
+                    await nextPageButton.evaluate(el => el.click());
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    // Try to select appointments from new page
+                    const paginatedAppointments = await page.$$('.ServiceAppointmentDateTime');
+                    logger.info(`📅 Found ${paginatedAppointments.length} appointments after pagination`);
+                    
+                    for (let i = 0; i < Math.min(paginatedAppointments.length, 5); i++) {
+                        try {
+                            const appointment = paginatedAppointments[i];
+                            const ariaLabel = await appointment.evaluate(el => el.getAttribute('aria-label'));
+                            const isVisible = await appointment.evaluate(el => el.offsetParent !== null);
+                            
+                            if (isVisible) {
+                                logger.info(`🎯 Clicking paginated appointment ${i + 1}: "${ariaLabel}"...`);
+                                await appointment.evaluate(el => el.click());
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                appointmentSelected = true;
+                                logger.info('✅ Appointment selected successfully from paginated results');
+                                break;
+                            }
+                        } catch (e) {
+                            logger.warn(`⚠️ Failed to select paginated appointment ${i + 1}: ${e.message}`);
                         }
-                    } catch (e) {
-                        // Continue
                     }
-                }
-                
-                // Try appointment selection again after expanding sections
-                logger.info('🔄 Retrying appointment selection after expanding sections...');
-                const newAppointments = await page.$$('.ServiceAppointmentDateTime[data-datetime]:not(.disabled)');
-                logger.info(`📅 Found ${newAppointments.length} appointments after expanding`);
-                
-                for (let i = 0; i < Math.min(newAppointments.length, 10); i++) {
-                    try {
-                        const appointment = newAppointments[i];
-                        const isVisible = await appointment.evaluate(el => el.offsetParent !== null);
-                        logger.info(`📋 Retry appointment ${i + 1}: visible=${isVisible}`);
-                        
-                        if (isVisible) {
-                            logger.info(`🎯 Clicking appointment ${i + 1} after expansion...`);
-                            await appointment.evaluate(el => el.click());
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            appointmentSelected = true;
-                            logger.info('✅ Appointment selected successfully after expanding sections');
-                            break;
-                        }
-                    } catch (e) {
-                        logger.warn(`⚠️ Failed to select appointment ${i + 1} after expansion: ${e.message}`);
-                    }
+                } else {
+                    logger.warn('⚠️ No appointments found and no pagination available');
                 }
             }
             
@@ -365,21 +326,37 @@ class MinimalRMVExtractor {
 
             // Step 3: Click Next button
             logger.info('➡️ Looking for Next button...');
-            const buttons = await page.$$('button');
             
-            for (const button of buttons) {
-                try {
-                    const text = await button.evaluate(el => el.textContent?.trim().toLowerCase());
-                    const isVisible = await button.evaluate(el => el.offsetParent !== null && !el.disabled);
-                    
-                    if (isVisible && text && text.includes('next')) {
-                        logger.info(`🔘 Clicking Next: "${text}"`);
-                        await button.evaluate(el => el.click());
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        break;
+            // First try to find the specific .next-button selector
+            const nextButton = await page.$('.next-button');
+            if (nextButton) {
+                const isVisible = await nextButton.evaluate(el => el.offsetParent !== null && !el.disabled);
+                if (isVisible) {
+                    logger.info('🔘 Clicking .next-button');
+                    await nextButton.evaluate(el => el.click());
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                } else {
+                    logger.warn('⚠️ .next-button found but not visible/disabled');
+                }
+            } else {
+                // Fallback to generic button search
+                logger.info('🔍 .next-button not found, searching for generic Next buttons...');
+                const buttons = await page.$$('button');
+                
+                for (const button of buttons) {
+                    try {
+                        const text = await button.evaluate(el => el.textContent?.trim().toLowerCase());
+                        const isVisible = await button.evaluate(el => el.offsetParent !== null && !el.disabled);
+                        
+                        if (isVisible && text && text.includes('next')) {
+                            logger.info(`🔘 Clicking Next: "${text}"`);
+                            await button.evaluate(el => el.click());
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
                     }
-                } catch (e) {
-                    continue;
                 }
             }
 

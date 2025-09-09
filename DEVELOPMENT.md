@@ -188,10 +188,10 @@ git show HEAD~1:filename.js
 
 ### Key Files:
 - `public/index.html` - Complete frontend application
-- `rmv-monitor-service.js` - **PRODUCTION** server with full monitoring features
+- `rmv-api-server.js` - **PRODUCTION** server with full monitoring features (renamed from rmv-monitor-service.js)
 - `rmv-monitor-service-test.js` - Simplified test server (development only)
-- `rmv-extractor-minimal.js` - Fast 9.3s personal data extraction (timing enhanced)
-- `rmv-user-data-extractor.js` - Enhanced scraper classes
+- `rmv-personal-data-extractor.js` - Fast 9.3s personal data extraction (renamed from rmv-extractor-minimal.js)
+- `rmv-appointment-scraper.js` - Enhanced scraper classes (renamed from rmv-user-data-extractor.js)
 
 ## 🔧 Development Commands
 
@@ -213,10 +213,10 @@ curl -X POST http://localhost:3000/api/extract-personal-data \
 ### 1. Connection/API Errors (SOLVED ✅)
 **Issue**: 404 errors for `/api/clear-sessions`, intermittent 500 errors  
 **Root Cause**: Running test server instead of production server  
-**Solution**: Switch `package.json` to use `rmv-monitor-service.js`
+**Solution**: Switch `package.json` to use `rmv-api-server.js`
 ```bash
 # package.json should have:
-"start": "node rmv-monitor-service.js"
+"start": "node rmv-api-server.js"
 # NOT: "node rmv-monitor-service-test.js"
 ```
 
@@ -238,7 +238,7 @@ curl -X POST http://localhost:3000/api/extract-personal-data \
 - Use git show to restore: `git show HEAD~1:file.js`
 
 ### 5. Test vs Production Server Confusion
-- **Production**: `rmv-monitor-service.js` (full features)
+- **Production**: `rmv-api-server.js` (full features, renamed from rmv-monitor-service.js)
 - **Test**: `rmv-monitor-service-test.js` (debugging only)
 - Always use production server for actual monitoring
 

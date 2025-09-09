@@ -225,9 +225,10 @@ git commit -m "backup before [change description]"
 ```
 
 ### File Organization:
-- `rmv-monitor-service.js` - Main server
+- `rmv-api-server.js` - Main server (renamed from rmv-monitor-service.js)
 - `public/index.html` - Complete frontend
-- `rmv-extractor-minimal.js` - Fast data extraction
+- `rmv-personal-data-extractor.js` - Fast data extraction (renamed from rmv-extractor-minimal.js)
+- `rmv-appointment-scraper.js` - Appointment scraping (renamed from rmv-user-data-extractor.js)
 - `DEVELOPMENT.md` - Developer guidelines
 - `CLAUDE.md` - System status for AI sessions
 

@@ -6,7 +6,7 @@ const winston = require('winston');
 const fs = require('fs').promises;
 
 // User data extraction modules
-const { RMVUserDataExtractor, EnhancedRMVScraper } = require('./rmv-user-data-extractor');
+const { RMVUserDataExtractor, EnhancedRMVScraper } = require('./rmv-appointment-scraper');
 
 // Configuration
 const config = {
@@ -1053,7 +1053,7 @@ app.post('/api/extract-personal-data', async (req, res) => {
 
         logger.info('Starting fast personal data extraction...');
 
-        const MinimalRMVExtractor = require('./rmv-extractor-minimal');
+        const MinimalRMVExtractor = require('./rmv-personal-data-extractor');
         const extractor = new MinimalRMVExtractor();
         
         const personalData = await extractor.extractPersonalData(url);

@@ -2,10 +2,10 @@
   "name": "rmv-monitor",
   "version": "1.0.0",
   "description": "RMV Appointment Monitoring Service",
-  "main": "rmv-monitor-service.js",
+  "main": "rmv-api-server.js",
   "scripts": {
-    "start": "node rmv-monitor-service.js",
-    "dev": "nodemon rmv-monitor-service.js",
+    "start": "node rmv-api-server.js",
+    "dev": "nodemon rmv-api-server.js",
     "test": "jest",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop rmv-monitor",

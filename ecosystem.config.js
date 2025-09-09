@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'rmv-monitor',
-    script: 'rmv-monitor-service.js',
+    script: 'rmv-api-server.js',
     instances: 1,
     autorestart: true,
     watch: false,

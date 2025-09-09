@@ -126,11 +126,8 @@ class MinimalRMVExtractor {
     /**
      * Extract data directly without any navigation
      */
-    async extractDataDirect(page, attempt = 1, maxAttempts = 3) {
+    async extractDataDirect(page) {
         try {
-            // Add stability wait for Railway environment
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             return await page.evaluate(() => {
                 const personalData = {
                     firstName: '',
@@ -210,15 +207,7 @@ class MinimalRMVExtractor {
             });
             
         } catch (error) {
-            logger.error(`❌ Data extraction error (attempt ${attempt}/${maxAttempts}): ${error.message}`);
-            
-            // Retry for execution context destroyed errors (Railway timing issue)
-            if (error.message.includes('Execution context was destroyed') && attempt < maxAttempts) {
-                logger.warn(`🔄 Retrying data extraction due to execution context destroyed (attempt ${attempt + 1}/${maxAttempts})`);
-                await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Progressive delay
-                return this.extractDataDirect(page, attempt + 1, maxAttempts);
-            }
-            
+            logger.error(`❌ Data extraction error: ${error.message}`);
             return {
                 firstName: '',
                 lastName: '',
@@ -368,15 +357,7 @@ class MinimalRMVExtractor {
                     return currentPageData;
                 } else {
                     logger.error('❌ No personal data found on current page and no appointments available');
-                    // Return a structured response instead of throwing to provide better user guidance
-                    return {
-                        error: 'No appointments available for personal data extraction',
-                        message: 'Your RMV URL has no available appointments. This usually means the appointment slots have been filled or expired. Please get a fresh RMV URL from the Massachusetts RMV website.',
-                        extractionMethod: 'failed_no_appointments',
-                        extractionTimestamp: new Date().toISOString(),
-                        sourceUrl: page.url(),
-                        pageTitle: await page.title()
-                    };
+                    throw new Error('No appointment selected - cannot proceed');
                 }
             } else {
                 logger.info('✅ Appointment selection confirmed - proceeding to Next button');
@@ -394,7 +375,7 @@ class MinimalRMVExtractor {
                     if (isVisible && text && text.includes('next')) {
                         logger.info(`🔘 Clicking Next: "${text}"`);
                         await button.evaluate(el => el.click());
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        await new Promise(resolve => setTimeout(resolve, 3000));
                         break;
                     }
                 } catch (e) {
@@ -402,9 +383,6 @@ class MinimalRMVExtractor {
                 }
             }
 
-            // Wait for page stability after navigation (Railway environment needs more time)
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
             // Extract data from final page
             const finalData = await this.extractDataDirect(page);
             logger.info(`📄 Final page: ${await page.title()}`);

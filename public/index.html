@@ -1861,13 +1861,16 @@
         let extractedPersonalData = null;
         
         function showSections() {
-            // Show all hidden sections with fade-in animation
-            const hiddenSections = document.querySelectorAll('.sections-hidden');
-            hiddenSections.forEach((section, index) => {
-                setTimeout(() => {
-                    section.classList.remove('sections-hidden');
-                    section.classList.add('section-fade-in');
-                }, index * 200); // Stagger the animations
+            // Show sections 2-7 with fade-in animation after successful personal data extraction
+            const sections = ['section2', 'section3', 'section4', 'section5', 'section6', 'section7'];
+            sections.forEach((sectionId, index) => {
+                const section = document.getElementById(sectionId);
+                if (section && section.classList.contains('sections-hidden')) {
+                    setTimeout(() => {
+                        section.classList.remove('sections-hidden');
+                        section.classList.add('section-fade-in');
+                    }, index * 200); // Stagger the animations
+                }
             });
         }
 
@@ -1964,6 +1967,9 @@
                 console.error('RMV connection failed:', error);
                 loader.style.display = 'none';
                 
+                // Hide sections 2-7 since personal data extraction failed
+                hideSubsequentSections();
+                
                 // Show the specific error message from backend if available
                 let errorMessage = error.message;
                 if (errorMessage === 'Failed to extract personal data') {
@@ -2036,9 +2042,9 @@
             document.getElementById('rmvUrl').select();
         }
 
-        // Hide subsequent sections when location discovery fails
+        // Hide subsequent sections when personal data extraction fails
         function hideSubsequentSections() {
-            const sections = ['section3', 'section4', 'section5', 'section6', 'section7'];
+            const sections = ['section2', 'section3', 'section4', 'section5', 'section6', 'section7'];
             sections.forEach(sectionId => {
                 const section = document.getElementById(sectionId);
                 if (section && !section.classList.contains('sections-hidden')) {
@@ -4177,9 +4183,8 @@
                     serviceCenters = discoveredServiceCenters;
                     isUsingDynamicLocations = true;
                     
-                    // Hide any previous error and show sections
+                    // Hide any previous error (don't show sections until personal data is extracted)
                     hideLocationDiscoveryError();
-                    showSubsequentSections();
                     
                     // Store appointment information for Section 5 display
                     if (data.appointmentInfo) {

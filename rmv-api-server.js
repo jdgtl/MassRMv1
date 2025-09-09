@@ -354,6 +354,15 @@ app.post('/api/extract-user-data', async (req, res) => {
                 timestamp: personalData.extractionTimestamp || new Date().toISOString()
             });
 
+        } catch (innerError) {
+            logger.error('Error in personal data extraction:', innerError);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to extract personal data',
+                details: innerError.message
+            });
+        }
+
     } catch (error) {
         logger.error('Error extracting user data:', error);
         res.status(500).json({

@@ -257,13 +257,19 @@ class MinimalRMVExtractor {
                         const isVisible = await appointment.evaluate(el => el.offsetParent !== null);
                         logger.info(`📋 Appointment ${i + 1}: "${ariaLabel}" visible=${isVisible}`);
                         
-                        if (isVisible) {
-                            logger.info(`🎯 Clicking appointment ${i + 1}: "${ariaLabel}"...`);
-                            await appointment.evaluate(el => el.click());
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            appointmentSelected = true;
-                            logger.info('✅ Appointment selected successfully');
-                            break;
+                        // Try clicking appointment regardless of visibility check (Railway compatibility)
+                        if (isVisible || true) {
+                            logger.info(`🎯 Clicking appointment ${i + 1}: "${ariaLabel}" (visible=${isVisible})...`);
+                            try {
+                                await appointment.evaluate(el => el.click());
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                appointmentSelected = true;
+                                logger.info('✅ Appointment selected successfully');
+                                break;
+                            } catch (clickError) {
+                                logger.warn(`⚠️ Click failed for appointment ${i + 1}: ${clickError.message}`);
+                                continue; // Try next appointment
+                            }
                         }
                     } catch (e) {
                         logger.warn(`⚠️ Failed to select appointment ${i + 1}: ${e.message}`);

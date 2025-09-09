@@ -5,8 +5,8 @@ const path = require('path');
 const winston = require('winston');
 const fs = require('fs').promises;
 
-// User data extraction modules
-const { RMVUserDataExtractor, EnhancedRMVScraper } = require('./rmv-appointment-scraper');
+// Personal data extraction module
+const MinimalRMVExtractor = require('./rmv-personal-data-extractor');
 
 // Configuration
 const config = {
@@ -120,282 +120,6 @@ const service = {
                 throw error;
             }
         },
-        async checkRMVUrl(fullUrl, userPreferences) {
-            // Production 3-Step Navigation RMV scraping
-            logger.info('Starting 3-Step Navigation RMV scraping for URL:', fullUrl);
-            
-            if (!this.browser) {
-                throw new Error('Browser not initialized');
-            }
-
-            const page = await this.browser.newPage();
-            const appointments = [];
-            
-            // Set user agent to avoid detection  
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-            
-            try {
-                // STEP 1: Navigate to initial URL and extract office list
-                logger.info('STEP 1: Navigating to RMV booking page and loading office list...');
-                await page.goto(fullUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // Extract location data and offices
-                const rmvData = await page.evaluate(() => {
-                    const data = {
-                        offices: [],
-                        locationData: [],
-                        pageTitle: document.title,
-                        debugInfo: {
-                            bodyText: document.body.innerText.substring(0, 1000)
-                        }
-                    };
-                    
-                    // Extract structured location data from window.displayData
-                    if (window.displayData && Array.isArray(window.displayData)) {
-                        data.locationData = window.displayData.map(location => ({
-                            id: location.Id,
-                            name: location.Name,
-                            address: location.Address
-                        }));
-                    }
-                    
-                    // Extract office buttons from the page
-                    const qflowButtons = document.querySelectorAll('.QflowObjectItem[data-id]');
-                    qflowButtons.forEach(btn => {
-                        const officeName = btn.textContent.split('\n')[0].trim();
-                        const dataId = btn.getAttribute('data-id');
-                        
-                        if (officeName && dataId) {
-                            data.offices.push({
-                                name: officeName,
-                                dataId: dataId,
-                                fullText: btn.textContent.trim()
-                            });
-                        }
-                    });
-                    
-                    return data;
-                });
-                
-                logger.info(`Found ${rmvData.offices.length} offices available`);
-                logger.info('🏢 All available offices:', rmvData.offices.map(o => o.name));
-                
-                // STEP 2: Filter and navigate through selected locations  
-                const selectedCenters = userPreferences?.locations || userPreferences?.centers || [];
-                const matchedOffices = rmvData.offices.filter(office => 
-                    selectedCenters.some(selected => 
-                        office.name.toLowerCase().includes(selected.toLowerCase()) ||
-                        selected.toLowerCase().includes(office.name.toLowerCase())
-                    )
-                );
-                
-                // If no matches, try all offices (limit to 3 for performance)
-                if (matchedOffices.length === 0 && rmvData.offices.length > 0) {
-                    logger.warn('No offices matched user preferences, using first 3 offices');
-                    matchedOffices.push(...rmvData.offices.slice(0, 3));
-                }
-                
-                logger.info(`STEP 2: Found ${matchedOffices.length} matching offices: ${matchedOffices.map(o => o.name).join(', ')}`);
-                
-                // Navigate to each matched office to get appointment times
-                for (const office of matchedOffices) {
-                    logger.info(`STEP 3: Navigating to ${office.name} for appointment times...`);
-                    
-                    try {
-                        // Click on the office location
-                        const locationSelector = `.QflowObjectItem[data-id="${office.dataId}"]`;
-                        await page.locator(locationSelector).wait();
-                        
-                        // More robust clicking with error handling
-                        try {
-                            await page.evaluate((selector) => {
-                                const element = document.querySelector(selector);
-                                if (element) {
-                                    element.click();
-                                }
-                            }, locationSelector);
-                            logger.info(`   ✅ Clicked ${office.name}`);
-                        } catch (clickError) {
-                            logger.warn(`   ⚠️ Click failed, trying alternative method: ${clickError.message}`);
-                            await page.$eval(locationSelector, el => el.click());
-                        }
-                        
-                        // Wait for navigation with more robust waiting
-                        await new Promise(resolve => setTimeout(resolve, 3000)); // Give time for navigation
-                        
-                        try {
-                            await Promise.race([
-                                page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }),
-                                page.locator('.ServiceAppointmentDateTime[data-datetime]').wait(),
-                                new Promise(resolve => setTimeout(resolve, 10000)) // Fallback timeout
-                            ]);
-                        } catch (navError) {
-                            logger.warn(`   ⚠️ Navigation wait failed: ${navError.message}`);
-                            // Continue anyway, might have already navigated
-                        }
-                        
-                        // Check if we're now on the appointment selection page
-                        const appointmentPageTitle = await page.title();
-                        logger.info(`Navigated to: ${appointmentPageTitle}`);
-                        
-                        // Extract appointment times using the pattern from attleboro-landing-page.html
-                        const officeAppointments = await page.evaluate(() => {
-                            const slots = [];
-                            
-                            // Look for ServiceAppointmentDateTime elements with data-datetime
-                            const appointmentElements = document.querySelectorAll('.ServiceAppointmentDateTime[data-datetime]');
-                            
-                            appointmentElements.forEach(el => {
-                                const dateTime = el.getAttribute('data-datetime');
-                                const displayTime = el.textContent.trim();
-                                const isAvailable = !el.classList.contains('disabled') && 
-                                                  !el.classList.contains('unavailable') &&
-                                                  el.classList.contains('valid');
-                                
-                                if (dateTime && displayTime && isAvailable) {
-                                    // Parse the datetime
-                                    const dt = new Date(dateTime);
-                                    const date = dt.toLocaleDateString();
-                                    const time = displayTime;
-                                    
-                                    slots.push({
-                                        date: date,
-                                        time: time,
-                                        datetime: dateTime,
-                                        displayText: displayTime,
-                                        available: true
-                                    });
-                                }
-                            });
-                            
-                            // Also look for grouped appointment displays
-                            const groupedElements = document.querySelectorAll('.DateTimeGrouping-Container .ServiceAppointmentDateTime');
-                            groupedElements.forEach(el => {
-                                const dateTime = el.getAttribute('data-datetime');
-                                const displayTime = el.textContent.trim();
-                                const isAvailable = !el.classList.contains('disabled') && 
-                                                  el.classList.contains('valid');
-                                
-                                if (dateTime && displayTime && isAvailable) {
-                                    const dt = new Date(dateTime);
-                                    const date = dt.toLocaleDateString();
-                                    
-                                    // Avoid duplicates
-                                    const isDuplicate = slots.some(slot => 
-                                        slot.datetime === dateTime
-                                    );
-                                    
-                                    if (!isDuplicate) {
-                                        slots.push({
-                                            date: date,
-                                            time: displayTime,
-                                            datetime: dateTime,
-                                            displayText: displayTime,
-                                            available: true
-                                        });
-                                    }
-                                }
-                            });
-                            
-                            return {
-                                slots: slots,
-                                pageTitle: document.title,
-                                totalFound: slots.length
-                            };
-                        });
-                        
-                        logger.info(`Found ${officeAppointments.totalFound} appointment slots for ${office.name}`);
-                        
-                        // Add appointments to our collection
-                        officeAppointments.slots.forEach(slot => {
-                            appointments.push({
-                                center: office.name,
-                                date: slot.date,
-                                time: slot.time,
-                                url: page.url(),
-                                raw: slot.displayText,
-                                type: '3-step-navigation',
-                                datetime: slot.datetime,
-                                officeName: office.name,
-                                officeId: office.dataId
-                            });
-                        });
-                        
-                        // Go back to office selection for next office
-                        if (matchedOffices.length > 1) {
-                            await page.goBack();
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                        }
-                        
-                    } catch (officeError) {
-                        logger.error(`Error processing office ${office.name}: ${officeError.message}`);
-                        
-                        // Try to recover by going back to the main URL
-                        try {
-                            await page.goto(fullUrl, { waitUntil: 'networkidle0', timeout: 15000 });
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                        } catch (recoverError) {
-                            logger.error(`Recovery failed: ${recoverError.message}`);
-                        }
-                    }
-                }
-                
-                // If no appointments found through navigation, check if we're already on appointment page
-                if (appointments.length === 0) {
-                    logger.info('No appointments found through navigation, checking if already on appointment page...');
-                    
-                    const currentPageAppointments = await page.evaluate(() => {
-                        const slots = [];
-                        const appointmentElements = document.querySelectorAll('.ServiceAppointmentDateTime[data-datetime]');
-                        
-                        appointmentElements.forEach(el => {
-                            const dateTime = el.getAttribute('data-datetime');
-                            const displayTime = el.textContent.trim();
-                            const isAvailable = !el.classList.contains('disabled') && 
-                                              el.classList.contains('valid');
-                            
-                            if (dateTime && displayTime && isAvailable) {
-                                const dt = new Date(dateTime);
-                                slots.push({
-                                    date: dt.toLocaleDateString(),
-                                    time: displayTime,
-                                    datetime: dateTime,
-                                    displayText: displayTime,
-                                    available: true
-                                });
-                            }
-                        });
-                        
-                        return slots;
-                    });
-                    
-                    if (currentPageAppointments.length > 0) {
-                        logger.info(`Found ${currentPageAppointments.length} appointments on current page`);
-                        currentPageAppointments.forEach(slot => {
-                            appointments.push({
-                                center: selectedCenters[0] || 'RMV Location',
-                                date: slot.date,
-                                time: slot.time,
-                                url: page.url(),
-                                raw: slot.displayText,
-                                type: 'direct-appointment-page',
-                                datetime: slot.datetime
-                            });
-                        });
-                    }
-                }
-                
-            } catch (error) {
-                logger.error('Error during 3-step RMV scraping:', error.message);
-                throw new Error(`3-step RMV scraping failed: ${error.message}`);
-            } finally {
-                await page.close();
-            }
-            
-            logger.info(`3-Step RMV scraping completed. Found ${appointments.length} total appointments across all locations`);
-            return appointments;
-        }
     }
 };
 
@@ -448,10 +172,10 @@ app.post('/api/scrape-rmv-appointments', async (req, res) => {
         let appointments = [];
 
         try {
-            // Use our 3-step scraper
-            appointments = await service.scraper.checkRMVUrl(
+            // Use fast appointments scraping with retry logic
+            appointments = await fastAppointmentsScrapingWithRetry(
                 rmvUrl,
-                { locations: selectedCenters, ...preferences }
+                selectedCenters
             );
         } catch (scrapeError) {
             logger.error('Scraping error:', scrapeError);
@@ -523,41 +247,15 @@ app.post('/api/check-appointments', async (req, res) => {
             await service.scraper.initialize();
         }
 
-        // Create enhanced scraper for user data extraction
-        const enhancedScraper = new EnhancedRMVScraper(service.scraper, logger);
-
         let appointments = [];
         let userData = null;
 
         try {
-            if (extractUserData) {
-                // Use enhanced scraper that also extracts user data
-                const result = await enhancedScraper.checkRMVUrlWithUserData(
-                    rmvUrl,
-                    userPreferences || { centers: selectedCenters }
-                );
-
-                appointments = result.appointments || [];
-                userData = result.userData;
-
-                logger.info('User data extraction results:', {
-                    found: userData?.foundUserInfo,
-                    hasValidData: userData?.validated?.isValid,
-                    source: userData?.extracted?.source
-                });
-
-                // If we found user data, save it for auto-fill
-                if (userData?.validated?.isValid) {
-                    await saveExtractedUserData(userData);
-                }
-
-            } else {
-                // Regular appointment check without user data extraction
-                appointments = await service.scraper.checkRMVUrl(
-                    rmvUrl,
-                    { ...userPreferences, centers: selectedCenters }
-                );
-            }
+            // Use fast appointments scraping for all requests
+            appointments = await fastAppointmentsScrapingWithRetry(
+                rmvUrl,
+                selectedCenters
+            );
 
             // Log appointments to database
             if (appointments && appointments.length > 0) {
@@ -630,52 +328,31 @@ app.post('/api/extract-user-data', async (req, res) => {
             await service.scraper.initialize();
         }
 
-        const page = await service.scraper.browser.newPage();
-
         try {
-            const extractor = new RMVUserDataExtractor(logger);
+            const extractor = new MinimalRMVExtractor();
 
-            // Setup response capture
-            await extractor.setupResponseCapture(page);
-
-            // Navigate to the URL
-            await page.goto(rmvUrl, {
-                waitUntil: 'networkidle2',
-                timeout: 30000
-            });
-
-            // Extract user data
-            const userData = await extractor.extractUserDataFromPage(page);
-
-            // Validate the data
-            const validated = extractor.validateUserData(userData);
-
-            // Extract URL parameters
-            const urlData = extractor.extractFromURLParams(rmvUrl);
+            // Use the extractor's built-in method that handles everything
+            const personalData = await extractor.extractPersonalData(rmvUrl);
 
             res.json({
                 success: true,
-                found: userData.found,
-                autoFillAvailable: validated.isValid,
+                found: !!(personalData.firstName || personalData.lastName || personalData.email || personalData.phone),
+                autoFillAvailable: !!(personalData.firstName && personalData.lastName),
                 extracted: {
-                    firstName: validated.cleaned.firstName || null,
-                    lastName: validated.cleaned.lastName || null,
-                    email: validated.cleaned.email || null,
-                    phone: validated.cleaned.phoneFormatted || null,
-                    rawPhone: validated.cleaned.phone || null
+                    firstName: personalData.firstName || null,
+                    lastName: personalData.lastName || null,
+                    email: personalData.email || null,
+                    phone: personalData.phone || null,
+                    rawPhone: personalData.phone || null
                 },
-                source: userData.source,
+                source: personalData.extractionMethod || 'personal_data_extractor',
                 urlParams: {
-                    accessToken: urlData.accessToken,
-                    sessionId: urlData.sessionId
+                    accessToken: null, // Not extracted by MinimalRMVExtractor
+                    sessionId: null
                 },
-                errors: validated.errors,
-                timestamp: new Date().toISOString()
+                errors: personalData.error ? [personalData.error] : [],
+                timestamp: personalData.extractionTimestamp || new Date().toISOString()
             });
-
-        } finally {
-            await page.close();
-        }
 
     } catch (error) {
         logger.error('Error extracting user data:', error);
